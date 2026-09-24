@@ -1,0 +1,14 @@
+body { font: 16px/1.5 system-ui, sans-serif; color: #20252d; background: #f5f6f8; margin: 0; }
+main { max-width: 760px; margin: 2rem auto; padding: 0 1rem 3rem; }
+section, details { background: white; padding: 1.2rem; margin: 1rem 0; border: 1px solid #d4d9e0; border-radius: 8px; }
+section section { padding: 1rem; }
+label { display: block; margin: .8rem 0; }
+input { display: block; box-sizing: border-box; width: 100%; font: inherit; padding: .5rem; border: 1px solid #8993a3; border-radius: 4px; }
+button { font: inherit; cursor: pointer; padding: .45rem .8rem; margin: .25rem .25rem .25rem 0; }
+button:disabled { cursor: wait; opacity: .6; }
+summary { cursor: pointer; font-weight: bold; }
+form + form { margin-top: 1.5rem; border-top: 1px solid #ddd; padding-top: .8rem; }
+#message { padding: .8rem; background: #e8edf8; white-space: pre-wrap; overflow-wrap: anywhere; }
+#message.error { background: #ffe2e2; }
+li { margin: .7rem 0; }
+[hidden] { display: none !important; }
