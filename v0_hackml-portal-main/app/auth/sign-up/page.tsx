@@ -4,6 +4,7 @@ import type React from "react"
 
 import { createClient } from "@/lib/supabase/client"
 import { Navbar } from "@/components/navbar"
+import { Turnstile, TURNSTILE_SITE_KEY } from "@/components/turnstile"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -14,6 +15,8 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState("")
+  const [captchaResetKey, setCaptchaResetKey] = useState(0)
   const router = useRouter()
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -28,8 +31,14 @@ export default function SignUpPage() {
       return
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters")
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters")
+      setIsLoading(false)
+      return
+    }
+
+    if (TURNSTILE_SITE_KEY && !captchaToken) {
+      setError("Complete the CAPTCHA first.")
       setIsLoading(false)
       return
     }
@@ -39,15 +48,18 @@ export default function SignUpPage() {
         email,
         password,
         options: {
+          captchaToken,
           emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
         },
       })
       if (error) throw error
-      router.push("/dashboard")
+      // A session exists only after the login email is verified.
+      router.push("/auth/verify-email")
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
     } finally {
       setIsLoading(false)
+      setCaptchaResetKey((key) => key + 1)
     }
   }
 
@@ -61,7 +73,7 @@ export default function SignUpPage() {
               <h1>
                 <span className="main-title">Create Account</span>
               </h1>
-              <p className="hero-subtitle">Sign up for HackML 2026</p>
+              <p className="hero-subtitle">Sign up for DataJam 2026</p>
               <form onSubmit={handleSignUp} className="retro-form">
                 <div className="form-group">
                   <label htmlFor="email" className="retro-label">Email</label>
@@ -98,6 +110,7 @@ export default function SignUpPage() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                   />
                 </div>
+                <Turnstile onToken={setCaptchaToken} onError={setError} resetKey={captchaResetKey} />
                 {error && <p className="form-error">{error}</p>}
                 <button type="submit" className="cta-button" disabled={isLoading}>
                   {isLoading ? "Creating account..." : "Create Account"}

@@ -2,7 +2,10 @@ import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ParticipantRegistrationForm } from "@/components/participant-registration-form"
+import { InviteNotice } from "@/components/datajam/invite-notice"
+import { PortalProfileForm } from "@/components/datajam/portal-profile-form"
+import { StatusLine } from "@/components/datajam/status-line"
+import type { RegistrationLookup } from "@/lib/datajam/server"
 
 const overlayCode = `import pandas as pd
 import numpy as np
@@ -21,12 +24,51 @@ print("[SUCCESS] Data Jam models initiated.")`
 
 const ctaClass = "h-14 w-full rounded-md sm:w-auto sm:flex-1 font-display text-base font-extrabold"
 
-interface RegistrationPortalProps {
-  isSignedIn: boolean
-  isRegistered: boolean
+function PortalContent({ registration }: { registration: RegistrationLookup }) {
+  if (registration.status === "signed-out") {
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="font-mono text-sm text-muted-foreground">
+          {">>> Create an account or sign in to fill out your registration."}
+        </p>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button asChild className={ctaClass}>
+            <Link href="/auth/sign-up">CREATE ACCOUNT</Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className={`${ctaClass} border-primary/25 bg-background text-primary hover:bg-primary/10 hover:text-primary`}
+          >
+            <Link href="/auth/login">SIGN IN</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (registration.status === "error") {
+    return <StatusLine status={{ kind: "error", text: registration.error }} />
+  }
+
+  const { state, email } = registration
+  if (state.next_step === "complete_profile") return <PortalProfileForm defaultStudentEmail={email} />
+
+  return (
+    <div className="flex flex-col gap-6">
+      <p className="font-mono text-sm text-teal-500">
+        {state.team
+          ? `>>> [OK] Registered on team ${state.team.name}.`
+          : ">>> [OK] Profile saved. Next, create or join a team."}
+      </p>
+      <Button asChild className={ctaClass}>
+        <Link href="/dashboard">{state.team ? "OPEN DASHBOARD" : "CHOOSE A TEAM"}</Link>
+      </Button>
+    </div>
+  )
 }
 
-export function RegistrationPortal({ isSignedIn, isRegistered }: RegistrationPortalProps) {
+export function RegistrationPortal({ registration }: { registration: RegistrationLookup }) {
   return (
     <section id="register" className="flex scroll-mt-4 justify-center px-4 pb-[120px] sm:px-8 lg:px-20">
       <Card className="relative w-full max-w-[800px] gap-9 overflow-hidden rounded-2xl border-primary/25 p-6 shadow-[0_12px_48px_rgba(0,240,255,0.05)] sm:p-12">
@@ -48,31 +90,9 @@ export function RegistrationPortal({ isSignedIn, isRegistered }: RegistrationPor
           </p>
         </div>
 
-        <div className="relative">
-          {isRegistered ? (
-            <div className="flex flex-col gap-6">
-              <p className="font-mono text-sm text-teal-500">{">>> [SUCCESS] Registration received."}</p>
-              <Button asChild className={ctaClass}>
-                <Link href="/dashboard">OPEN DASHBOARD</Link>
-              </Button>
-            </div>
-          ) : isSignedIn ? (
-            <ParticipantRegistrationForm />
-          ) : (
-            <div className="flex flex-col gap-4">
-              <p className="font-mono text-sm text-muted-foreground">
-                {">>> Create an account or sign in to fill out your registration."}
-              </p>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Button asChild className={ctaClass}>
-                  <Link href="/auth/sign-up">CREATE ACCOUNT</Link>
-                </Button>
-                <Button asChild variant="outline" className={`${ctaClass} border-primary/25 bg-background text-primary hover:bg-primary/10 hover:text-primary`}>
-                  <Link href="/auth/login">SIGN IN</Link>
-                </Button>
-              </div>
-            </div>
-          )}
+        <div className="relative flex flex-col gap-6">
+          <InviteNotice />
+          <PortalContent registration={registration} />
         </div>
       </Card>
     </section>

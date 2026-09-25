@@ -6,6 +6,12 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Proxy registration actions to the datajam-app backend so the browser calls it same-origin.
+  async rewrites() {
+    const apiUrl = process.env.DATAJAM_API_URL
+    if (!apiUrl) return []
+    return [{ source: "/api/action", destination: `${apiUrl.replace(/\/$/, "")}/api/action` }]
+  },
   async redirects() {
     return [
       {

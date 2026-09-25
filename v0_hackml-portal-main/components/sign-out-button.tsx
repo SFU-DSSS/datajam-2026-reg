@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/client"
 import { LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
 
 export function SignOutButton() {
   const router = useRouter()
@@ -15,9 +16,13 @@ export function SignOutButton() {
   }
 
   return (
-    <button className="retro-button" onClick={handleSignOut}>
-      <LogOut className="w-4 h-4" style={{ marginRight: "0.5rem" }} />
-      Sign Out
-    </button>
+    <Button
+      variant="outline"
+      onClick={handleSignOut}
+      className="h-10 rounded-md border-primary/25 bg-background font-mono text-xs font-semibold text-primary hover:bg-primary/10 hover:text-primary"
+    >
+      <LogOut />
+      SIGN OUT
+    </Button>
   )
 }

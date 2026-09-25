@@ -3,10 +3,10 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 
 const links = [
-  { href: "#about", label: "ABOUT" },
-  { href: "#schedule", label: "SCHEDULE" },
-  { href: "#prizes", label: "PRIZES" },
-  { href: "#faq", label: "FAQ" },
+  { href: "/#about", label: "ABOUT" },
+  { href: "/#schedule", label: "SCHEDULE" },
+  { href: "/#prizes", label: "PRIZES" },
+  { href: "/#faq", label: "FAQ" },
 ]
 
 export function SiteHeader() {
