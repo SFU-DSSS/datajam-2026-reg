@@ -6,6 +6,44 @@ import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+
+const fieldClass =
+  "h-12 rounded-sm border-border bg-background px-4 text-sm md:text-sm text-foreground shadow-none placeholder:text-muted-foreground focus-visible:ring-primary/30"
+
+function FieldHeader({ htmlFor, label, required = true }: { htmlFor?: string; label: string; required?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <Label htmlFor={htmlFor} className="font-mono text-xs leading-normal font-semibold uppercase text-primary">
+        {`// ${label}`}
+      </Label>
+      <span className="font-mono text-[11px] text-slate-600">{required ? "[REQUIRED]" : "[OPTIONAL]"}</span>
+    </div>
+  )
+}
+
+function FieldHint({ children }: { children: React.ReactNode }) {
+  return <p className="font-mono text-[11px] leading-normal text-slate-600">{children}</p>
+}
+
+// Text input with the terminal-style "_" cursor from the design
+function TerminalInput({ className, ...props }: React.ComponentProps<typeof Input>) {
+  return (
+    <div className="relative">
+      <Input className={cn(fieldClass, "pr-10", className)} {...props} />
+      <span aria-hidden className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 font-mono text-xs text-slate-600">
+        _
+      </span>
+    </div>
+  )
+}
+
 
 export function ParticipantRegistrationForm() {
   const router = useRouter()
@@ -87,162 +125,175 @@ export function ParticipantRegistrationForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="retro-form">
-      <div className="form-row">
-        <div className="form-group">
-          <label htmlFor="firstName" className="retro-label">First Name</label>
-          <input
-            id="firstName"
-            type="text"
-            className="retro-input"
-            placeholder="John"
-            value={formData.firstName}
-            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+    <form onSubmit={handleSubmit} className="flex flex-col gap-9 font-sans leading-normal">
+      <div className="flex flex-col gap-6">
+        <div className="grid gap-6 sm:grid-cols-2 sm:gap-5">
+          <div className="flex flex-col gap-2">
+            <FieldHeader htmlFor="firstName" label="First Name" />
+            <TerminalInput
+              id="firstName"
+              placeholder="e.g. Marie"
+              value={formData.firstName}
+              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <FieldHeader htmlFor="lastName" label="Last Name" />
+            <TerminalInput
+              id="lastName"
+              placeholder="e.g. Curie"
+              value={formData.lastName}
+              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <FieldHeader htmlFor="email" label="Email Address" />
+          <TerminalInput
+            id="email"
+            type="email"
+            placeholder="e.g. mcurie@sfu.ca"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             required
           />
+          <FieldHint>Preferred: @sfu.ca email</FieldHint>
         </div>
-        <div className="form-group">
-          <label htmlFor="lastName" className="retro-label">Last Name</label>
-          <input
-            id="lastName"
-            type="text"
-            className="retro-input"
-            placeholder="Doe"
-            value={formData.lastName}
-            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+
+        <div className="grid gap-6 sm:grid-cols-2 sm:gap-5">
+          <div className="flex flex-col gap-2">
+            <FieldHeader htmlFor="studentNumber" label="Student Number" />
+            <TerminalInput
+              id="studentNumber"
+              placeholder="e.g. 300913643"
+              value={formData.studentNumber}
+              onChange={(e) => setFormData({ ...formData, studentNumber: e.target.value })}
+              required
+            />
+            <FieldHint>9-digit number listed on your student ID</FieldHint>
+          </div>
+          <div className="flex flex-col gap-2">
+            <FieldHeader htmlFor="discordUsername" label="Discord Username" />
+            <TerminalInput
+              id="discordUsername"
+              placeholder="e.g. data8"
+              value={formData.discordUsername}
+              onChange={(e) => setFormData({ ...formData, discordUsername: e.target.value })}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-2 sm:gap-5">
+          <div className="flex flex-col gap-2">
+            <FieldHeader htmlFor="major" label="Major / Program" />
+            <Select value={formData.major} onValueChange={(major) => setFormData({ ...formData, major })} required>
+              <SelectTrigger
+                id="major"
+                className={cn(fieldClass, "w-full data-[size=default]:h-12 [&_svg:not([class*='text-'])]:text-primary [&_svg]:opacity-100")}
+              >
+                <SelectValue placeholder="Select Major" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="data-science">Data Science</SelectItem>
+                <SelectItem value="computer-science">Computer Science</SelectItem>
+                <SelectItem value="statistics">Statistics</SelectItem>
+                <SelectItem value="business">Business</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <FieldHeader htmlFor="year" label="Year of Study" />
+            <Select value={formData.year} onValueChange={(year) => setFormData({ ...formData, year })} required>
+              <SelectTrigger
+                id="year"
+                className={cn(fieldClass, "w-full data-[size=default]:h-12 [&_svg:not([class*='text-'])]:text-primary [&_svg]:opacity-100")}
+              >
+                <SelectValue placeholder="Select Year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1</SelectItem>
+                <SelectItem value="2">2</SelectItem>
+                <SelectItem value="3">3</SelectItem>
+                <SelectItem value="4+">4+</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <fieldset className="flex flex-col gap-3">
+          <legend className="contents">
+            <FieldHeader label="How did you hear about this event?" required={false} />
+          </legend>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {["Instagram", "Discord", "Email", "A friend", "Posters", "Other"].map((option) => (
+              <Label
+                key={option}
+                className="h-12 cursor-pointer gap-3 rounded-sm border border-border bg-background px-4 text-sm font-normal text-muted-foreground has-[[data-state=checked]]:border-primary/50 has-[[data-state=checked]]:text-foreground"
+              >
+                <Checkbox
+                  checked={formData.howHeard.includes(option)}
+                  onCheckedChange={() => toggleHowHeard(option)}
+                  className="rounded-[2px] border-slate-600"
+                />
+                {option}
+              </Label>
+            ))}
+          </div>
+        </fieldset>
+
+        <div className="flex flex-col gap-2">
+          <FieldHeader htmlFor="kaggleUsername" label="Kaggle Username" />
+          <TerminalInput
+            id="kaggleUsername"
+            placeholder="e.g. your_kaggle_username"
+            value={formData.kaggleUsername}
+            onChange={(e) => setFormData({ ...formData, kaggleUsername: e.target.value })}
             required
+          />
+          <FieldHint>
+            If you haven't already, please create a free Kaggle account at{" "}
+            <a
+              href="https://www.kaggle.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline-offset-4 hover:underline"
+            >
+              kaggle.com
+            </a>
+          </FieldHint>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <FieldHeader htmlFor="dietaryRestrictions" label="Dietary Restrictions" />
+          <Textarea
+            id="dietaryRestrictions"
+            className={cn(fieldClass, "h-auto min-h-24 py-3")}
+            placeholder="e.g. Vegetarian, Vegan, Gluten-free, Nut allergy, None"
+            value={formData.dietaryRestrictions}
+            onChange={(e) => setFormData({ ...formData, dietaryRestrictions: e.target.value })}
+            required
+            rows={3}
           />
         </div>
       </div>
 
-      <div className="form-group">
-        <label htmlFor="email" className="retro-label">Email</label>
-        <input
-          id="email"
-          type="email"
-          className="retro-input"
-          placeholder="data8@sfu.ca"
-          value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          required
-        />
-        <p className="form-hint">Preferred: @sfu.ca email</p>
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="studentNumber" className="retro-label">Student Number</label>
-        <input
-          id="studentNumber"
-          type="text"
-          className="retro-input"
-          placeholder="300913643"
-          value={formData.studentNumber}
-          onChange={(e) => setFormData({ ...formData, studentNumber: e.target.value })}
-          required
-        />
-        <p className="form-hint">9-digit number listed on your student ID</p>
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="discordUsername" className="retro-label">Discord Username</label>
-        <input
-          id="discordUsername"
-          type="text"
-          className="retro-input"
-          placeholder="data8"
-          value={formData.discordUsername}
-          onChange={(e) => setFormData({ ...formData, discordUsername: e.target.value })}
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="major" className="retro-label">Major</label>
-        <select
-          id="major"
-          className="retro-input retro-select"
-          value={formData.major}
-          onChange={(e) => setFormData({ ...formData, major: e.target.value })}
-          required
+      <div className="flex flex-col gap-4">
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="h-14 w-full rounded-md font-display text-base font-extrabold shadow-[0_4px_8px_rgba(0,240,255,0.25)]"
         >
-          <option value="">Select your major</option>
-          <option value="data-science">Data Science</option>
-          <option value="computer-science">Computer Science</option>
-          <option value="statistics">Statistics</option>
-          <option value="business">Business</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="year" className="retro-label">What year are you in?</label>
-        <select
-          id="year"
-          className="retro-input retro-select"
-          value={formData.year}
-          onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-          required
-        >
-          <option value="">Select your year</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4+">4+</option>
-        </select>
-      </div>
-
-      <div className="form-group">
-        <label className="retro-label">How did you hear about this event?</label>
-        <div className="retro-checkbox-group">
-          {["Instagram", "Discord", "Email", "A friend", "Posters", "Other"].map((option) => (
-            <label key={option} className="retro-checkbox-label">
-              <input
-                type="checkbox"
-                className="retro-checkbox"
-                checked={formData.howHeard.includes(option)}
-                onChange={() => toggleHowHeard(option)}
-              />
-              <span>{option}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="kaggleUsername" className="retro-label">Kaggle Username</label>
-        <input
-          id="kaggleUsername"
-          type="text"
-          className="retro-input"
-          placeholder="your_kaggle_username"
-          value={formData.kaggleUsername}
-          onChange={(e) => setFormData({ ...formData, kaggleUsername: e.target.value })}
-          required
-        />
-        <p className="form-hint">
-          If you haven't already, please create a free Kaggle account at{" "}
-          <a href="https://www.kaggle.com/" target="_blank" rel="noopener noreferrer" className="retro-link">
-            kaggle.com
-          </a>
+          {isLoading ? "SUBMITTING..." : "SUBMIT REGISTRATION"}
+        </Button>
+        <p className="text-center font-mono text-[11px] text-slate-600">
+          * BY REGISTERING, YOU AGREE TO SFU DATA JAM ETHICS &amp; RULES_
         </p>
       </div>
-
-      <div className="form-group">
-        <label htmlFor="dietaryRestrictions" className="retro-label">Do you have any dietary restrictions?</label>
-        <textarea
-          id="dietaryRestrictions"
-          className="retro-input retro-textarea"
-          placeholder="e.g., Vegetarian, Vegan, Gluten-free, Nut allergy, None"
-          value={formData.dietaryRestrictions}
-          onChange={(e) => setFormData({ ...formData, dietaryRestrictions: e.target.value })}
-          required
-          rows={3}
-        />
-      </div>
-
-      <button type="submit" className="cta-button" disabled={isLoading}>
-        {isLoading ? "Saving..." : "Save Registration"}
-      </button>
     </form>
   )
 }

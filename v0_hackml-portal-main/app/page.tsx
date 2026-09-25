@@ -1,97 +1,56 @@
-import Link from "next/link"
-import { Navbar } from "@/components/navbar"
+import Image from "next/image"
+import { createClient } from "@/lib/supabase/server"
+import { SiteHeader } from "@/components/datajam/site-header"
+import { Hero } from "@/components/datajam/hero"
+import { RegistrationPortal } from "@/components/datajam/registration-portal"
+import { ChallengeStructure } from "@/components/datajam/challenge-structure"
+import { Prizes } from "@/components/datajam/prizes"
+import { Faq } from "@/components/datajam/faq"
+import { SiteFooter } from "@/components/datajam/site-footer"
 
-export default function HackMLPortal() {
+export default async function DataJamPortal() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  let isRegistered = false
+  if (user) {
+    const { data: participant } = await supabase.from("participants").select("id").eq("id", user.id).maybeSingle()
+    isRegistered = Boolean(participant)
+  }
+
   return (
-    <>
-      {/* Top navigation bar */}
-      <Navbar />
+    <div id="top" className="relative overflow-hidden bg-background font-sans text-base leading-normal text-foreground">
+      {/* Background glows */}
+      <Image
+        src="/datajam/glow-left.svg"
+        alt=""
+        width={840}
+        height={840}
+        priority
+        className="pointer-events-none absolute top-[-20px] left-[-320px] max-w-none"
+      />
+      <Image
+        src="/datajam/glow-right.svg"
+        alt=""
+        width={1000}
+        height={1000}
+        priority
+        className="pointer-events-none absolute top-[450px] right-[-350px] max-w-none"
+      />
 
-      {/* Hero section */}
-      <main>
-        <section className="hero">
-          <div className="container">
-            <div className="hero-content">
-              <h1>
-                <span className="year">Team Registration Portal</span>
-                <span className="main-title">Join HackML 2026</span>
-              </h1>
-              <p className="hero-subtitle">
-                The Data Science Student Society (DSSS) is excited to host HackML 2026 this January! 
-                <br />Join us for a 12-hour
-                model-building competition where students work in teams to solve problems through appropriate machine
-                learning model applications.
-              </p>
-              <Link href="/auth/sign-up" className="cta-button">
-                Get Started →
-              </Link>
-            </div>
-
-            {/* Info cards row */}
-            <div className="cards-grid">
-              <div className="card">
-                <div className="card-icon">📅</div>
-                <h2>Date</h2>
-                <p>January 31, 2026</p>
-              </div>
-              <div className="card">
-                <div className="card-icon">⏱️</div>
-                <h2>Duration</h2>
-                <p>12 Hours</p>
-              </div>
-              <div className="card">
-                <div className="card-icon">👾</div>
-                <h2>Team Size</h2>
-                <p>1–4 Members</p>
-              </div>
-              <div className="card">
-                <div className="card-icon">🏆</div>
-                <h2>Format</h2>
-                <p>Kaggle-based</p>
-              </div>
-            </div>
-
-            {/* How it works section */}
-            <section className="info-section">
-              <h2 className="section-title">
-                <span className="section-title-text">How It Works</span>
-              </h2>
-              <div className="how-it-works-grid">
-                <div className="card">
-                  <div className="card-icon">1</div>
-                  <h2>Sign Up</h2>
-                  <p>Create an account and complete your participant registration.</p>
-                </div>
-                <div className="card">
-                  <div className="card-icon">2</div>
-                  <h2>Form a Team</h2>
-                  <p>Create or join a team using a team code (1–4 members).</p>
-                </div>
-                <div className="card">
-                  <div className="card-icon">3</div>
-                  <h2>Compete</h2>
-                  <p>Build ML models and compete on January 31, 2026.</p>
-                </div>
-                <div className="card">
-                  <div className="card-icon">★</div>
-                  <h2>Have Fun</h2>
-                  <p>Enjoy a retro-themed ML hackathon with friends and prizes!</p>
-                </div>
-                <div className="card">
-                  <div className="card-icon">✉︎</div>
-                  <h2>Questions?</h2>
-                  <p>Reach out to us at <u><a href="https://www.sfudsss.com/contact">SFU DSSS Contacts</a></u>!</p>
-                </div>
-              </div>
-            </section>
-          </div>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer>
-        <p>Hosted by the Data Science Student Society (DSSS) at Simon Fraser University</p>
-      </footer>
-    </>
+      <div className="relative">
+        <SiteHeader />
+        <main>
+          <Hero />
+          <RegistrationPortal isSignedIn={Boolean(user)} isRegistered={isRegistered} />
+          <ChallengeStructure />
+          <Prizes />
+          <Faq />
+        </main>
+        <SiteFooter />
+      </div>
+    </div>
   )
 }
