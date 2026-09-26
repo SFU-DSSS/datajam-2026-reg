@@ -15,11 +15,13 @@ Self-contained backend and plain HTML/CSS/JavaScript test frontend. Deploy this 
 
 ## 1. Set up Supabase
 
+**Email quick start:** follow [Brevo setup](BREVO_SETUP.md). Supabase Free supports this setup. Signup verification and password resets use Brevo through Supabase SMTP; a private organizer command handles additional event emails.
+
 1. Create a **new Supabase project**. Do not apply this migration over the example app's database.
 2. Open SQL Editor and execute [`supabase/001_registration.sql`](supabase/001_registration.sql) once. This creates private tables and one authenticated public function. Keep `registration_private` out of the exposed API schemas.
 3. In Authentication, enable email/password signup and **Confirm email**. Set minimum password length to at least eight.
 4. Configure your Site URL and allowed redirect URLs. For local testing add `http://localhost:3000/`. After deploying, add `https://YOUR-PROJECT.vercel.app/` and update Site URL. Add your custom domain later if applicable.
-5. Configure custom SMTP for real attendees. Supabase's default email sender has restricted delivery and quotas; it is not a production event mail service. Set Auth email/request rate limits appropriate to the event.
+5. [Connect Brevo SMTP](BREVO_SETUP.md#1-connect-brevo-to-supabase-required). The guide includes the exact host, port, credential fields, and delivery test. Supabase's default email sender has restricted delivery and quotas; configure Brevo before inviting attendees.
 6. Create a Cloudflare Turnstile widget. Allow your Vercel/custom domains and your development hostname. In Supabase Authentication's bot protection settings, enable Turnstile and enter its **secret key**. The app receives only its **site key**.
 7. Copy the project URL and publishable key (legacy `anon` key also works) from Supabase project settings. **Never use a service-role or secret key** for `SUPABASE_ANON_KEY`.
 
@@ -46,7 +48,7 @@ The page shows a setup error until you provide working environment variables. Th
 1. Push the repository to your Git provider and import it into Vercel (or deploy this folder with the Vercel CLI).
 2. Set **Root Directory** to `datajam-app` if importing this whole repository. If uploading only this folder as its own repo, use that repo's root.
 3. Choose **Other** for Framework Preset, Node.js **22.x**, build command **`npm run build`**, output directory **`public`**, and install command **`npm ci`**. `vercel.json` contains the build/output settings.
-4. Add the variables from `.env.example` to Vercel's environment settings. `SUPABASE_URL` and `SUPABASE_ANON_KEY` are required; configure `TURNSTILE_SITE_KEY` before opening public signup. Keep `.env.local` out of Git.
+4. Add `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `TURNSTILE_SITE_KEY`, and (if needed) `ALLOWED_ORIGINS` from `.env.example` to Vercel's environment settings. The optional `BREVO_*` variables are only needed locally for the organizer email command. Supabase SMTP credentials belong in the Supabase dashboard. Keep `.env.local` out of Git.
 5. Deploy, then configure that exact deployed URL in Supabase redirect URLs and Turnstile allowed hostnames. Redeploy if environment variables change.
 
 Vercel runs `api/config.js` and `api/action.js` as Node functions and serves `public/` as static files. Supabase hosts the persistent database and authentication. Nothing is stored on Vercel's temporary filesystem.
