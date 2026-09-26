@@ -29,12 +29,17 @@ async function api(action, data = {}) {
 }
 function render() {
   const { profile, team, permissions, max_team_size } = state;
-  $('profile-details').open = !profile;
+  const profileComplete = profile && typeof profile.photo_consent === 'boolean';
+  $('profile-details').open = !profileComplete;
+  for (const input of $('profile-form').querySelectorAll('input[name=photo_consent]')) {
+    input.checked = typeof profile?.photo_consent === 'boolean' && input.value === String(profile.photo_consent);
+  }
   if (profile) for (const [key, value] of Object.entries(profile)) {
+    if (key === 'photo_consent') continue;
     const input = $('profile-form').elements.namedItem(key);
     if (input) input.value = value;
   }
-  $('choose-team').hidden = !profile || !!team;
+  $('choose-team').hidden = !profileComplete || !!team;
   $('team').hidden = !team;
   $('capacity').textContent = `Teams can have up to ${max_team_size} members. You can belong to one team.`;
   $('join-form').elements.code.value = localStorage.getItem('pending-invite') || '';
@@ -77,7 +82,12 @@ async function refresh() {
 }
 function bindForm(id, action, success) {
   $(id).onsubmit = e => { e.preventDefault(); run(async () => {
-    await api(action, fields(e.target));
+    const data = fields(e.target);
+    if (action === 'profile') {
+      if (!['true', 'false'].includes(data.photo_consent)) throw new Error('Choose your photo consent preference.');
+      data.photo_consent = data.photo_consent === 'true';
+    }
+    await api(action, data);
     if (action === 'join' || action === 'create') {
       localStorage.removeItem('pending-invite');
       history.replaceState(null, '', location.pathname);

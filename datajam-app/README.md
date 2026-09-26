@@ -6,6 +6,7 @@ Self-contained backend and plain HTML/CSS/JavaScript test frontend. Deploy this 
 
 - Email/password authentication, login-email verification, logout, password recovery, and Cloudflare Turnstile integration.
 - Required name, institution, student number, student email, and Discord username. Student email is collected, not verified, and may differ from login email.
+- Required yes/no photo-consent choice, with no preselected answer. Opting out does not prevent participation. Participants can update their preference in their profile; only they and database administrators can see it.
 - One team per participant, profile required before joining/creating, configurable capacity (default four).
 - Create team, join with a 12-character code or link, roster, copy invitation, leave team.
 - Captain can rename, remove members, regenerate invitations, and transfer captaincy.
@@ -18,7 +19,7 @@ Self-contained backend and plain HTML/CSS/JavaScript test frontend. Deploy this 
 **Email quick start:** follow [Brevo setup](BREVO_SETUP.md). Supabase Free supports this setup. Signup verification and password resets use Brevo through Supabase SMTP; a private organizer command handles additional event emails.
 
 1. Create a **new Supabase project**. Do not apply this migration over the example app's database.
-2. Open SQL Editor and execute [`supabase/001_registration.sql`](supabase/001_registration.sql) once. This creates private tables and one authenticated public function. Keep `registration_private` out of the exposed API schemas.
+2. Open SQL Editor and execute [`supabase/001_registration.sql`](supabase/001_registration.sql) once, then [`supabase/002_photo_consent.sql`](supabase/002_photo_consent.sql) once. This creates private tables and one authenticated public function, then adds photo consent. Keep `registration_private` out of the exposed API schemas. **If you already ran 001, run only 002** before deploying the updated app; do not recreate the database.
 3. In Authentication, enable email/password signup and **Confirm email**. Set minimum password length to at least eight.
 4. Configure your Site URL and allowed redirect URLs. For local testing add `http://localhost:3000/`. After deploying, add `https://YOUR-PROJECT.vercel.app/` and update Site URL. Add your custom domain later if applicable.
 5. [Connect Brevo SMTP](BREVO_SETUP.md#1-connect-brevo-to-supabase-required). The guide includes the exact host, port, credential fields, and delivery test. Supabase's default email sender has restricted delivery and quotas; configure Brevo before inviting attendees.
@@ -52,6 +53,30 @@ The page shows a setup error until you provide working environment variables. Th
 5. Deploy, then configure that exact deployed URL in Supabase redirect URLs and Turnstile allowed hostnames. Redeploy if environment variables change.
 
 Vercel runs `api/config.js` and `api/action.js` as Node functions and serves `public/` as static files. Supabase hosts the persistent database and authentication. Nothing is stored on Vercel's temporary filesystem.
+
+## Photo consent for organizers
+
+Apply `002_photo_consent.sql` before deploying this frontend. Existing profiles keep their information and team membership, with an unanswered (`null`) preference until they save an explicit choice. New profile saves require a JSON boolean; both yes and no allow creating/joining teams. Existing team members can still manage/leave their team while being prompted to answer.
+
+The profile form asks about event photography and use in event recaps/promotion on the website and social media. Review this wording before opening registration so it matches your intended use. Preferences are not shown to teammates. The timestamp records when the current answer was saved/changed, not a full history.
+
+In Supabase **SQL Editor**, run this as the project administrator to get a check-in list (export the result as CSV if needed):
+
+```sql
+select p.name, p.student_email, t.name as team,
+  case p.photo_consent
+    when true then 'Yes'
+    when false then 'No - do not photograph'
+    else 'Not answered - ask before photographing'
+  end as photo_preference,
+  p.photo_consent_updated_at
+from registration_private.profiles p
+left join registration_private.members m on m.user_id = p.id
+left join registration_private.teams t on t.id = m.team_id
+order by p.photo_consent nulls first, p.name;
+```
+
+For only opt-outs and unanswered preferences, add `where p.photo_consent is not true` before `order by`. Treat unanswered preferences as no permission until confirmed. Refresh the list before the event, agree on a check-in method to identify opt-outs, and brief photographers. The form records preferences; organizers must put them into practice. Keep exports restricted to organizers who need them.
 
 ## Team size
 

@@ -17,6 +17,13 @@ before(async () => {
   `);
   await db.exec(await readFile(new URL('../supabase/001_registration.sql', import.meta.url), 'utf8'));
   for (const id of ids) await db.query('insert into auth.users values ($1, now())', [id]);
+  await db.query(`insert into registration_private.profiles values ($1, 'Existing attendee', 'University', '123', 'old@example.com', 'old')`, [ids[0]]);
+  await db.exec(await readFile(new URL('../supabase/002_photo_consent.sql', import.meta.url), 'utf8'));
+  const upgraded = await call(0, 'me');
+  assert.equal(upgraded.profile.photo_consent, null);
+  assert.equal(upgraded.profile.photo_consent_updated_at, null);
+  assert.equal(upgraded.next_step, 'complete_profile');
+  assert.match((await call(0, 'create', { name: 'Pending consent' })).error, /photo consent/);
 });
 after(async () => { await db?.close(); });
 beforeEach(async () => {
@@ -32,9 +39,29 @@ async function call(i, action, payload = {}) {
   });
 }
 async function profile(i) {
-  return call(i, 'profile', { name: `Student ${i}`, institution: 'Any University', student_number: `N-${i}`, student_email: `student${i}@school.example`, discord_username: `student${i}` });
+  return call(i, 'profile', { name: `Student ${i}`, institution: 'Any University', student_number: `N-${i}`, student_email: `student${i}@school.example`, discord_username: `student${i}`, photo_consent: false });
 }
 async function team() { await profile(0); return (await call(0, 'create', { name: 'Data folks' })).team; }
+
+test('photo consent requires an explicit boolean, preserves opt-out, and permits changes', async () => {
+  const data = { name: 'Student', institution: 'University', student_number: '123', student_email: 'student@example.com', discord_username: 'student' };
+  for (const value of [undefined, null, 'false', 'true', 0, 1, {}, []]) {
+    const result = await call(0, 'profile', { ...data, photo_consent: value });
+    assert.match(result.error, /consent/);
+    assert.equal((await call(0, 'me')).profile, null);
+  }
+  const optedOut = await call(0, 'profile', { ...data, photo_consent: false });
+  assert.equal(optedOut.profile.photo_consent, false);
+  assert.ok(optedOut.profile.photo_consent_updated_at);
+  const unchanged = await call(0, 'profile', { ...data, name: 'New name', photo_consent: false });
+  assert.equal(unchanged.profile.photo_consent_updated_at, optedOut.profile.photo_consent_updated_at);
+  assert.ok(!(await call(0, 'create', { name: 'Opt-out team' })).error);
+  const optedIn = await call(0, 'profile', { ...data, photo_consent: true });
+  assert.equal(optedIn.profile.photo_consent, true);
+  assert.notEqual(optedIn.profile.photo_consent_updated_at, optedOut.profile.photo_consent_updated_at);
+  assert.equal((await call(0, 'me')).profile.photo_consent, true);
+  assert.equal((await call(0, 'profile', { ...data, photo_consent: false })).profile.photo_consent, false);
+});
 
 test('profile gate, validation, verified login, and single-team invariant', async () => {
   assert.equal((await call(0, 'me')).next_step, 'complete_profile');

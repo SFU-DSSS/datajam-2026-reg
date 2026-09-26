@@ -41,7 +41,7 @@ if (!response.ok) throw new Error(result.error);
 | Action | `data` | Rule |
 | --- | --- | --- |
 | `me` | `{}` | Read own current state |
-| `profile` | `{name, institution, student_number, student_email, discord_username}` | Create/update own full profile |
+| `profile` | `{name, institution, student_number, student_email, discord_username, photo_consent}` | Create/update own full profile; consent must be JSON `true` or `false` |
 | `create` | `{name}` | Completed profile; no current team |
 | `join` | `{code}` | Completed profile; no team; valid invitation; room available |
 | `rename` | `{name}` | Captain only |
@@ -61,7 +61,9 @@ Every success returns the complete refreshed state:
     "institution": "Example University",
     "student_number": "1234567",
     "student_email": "alex@school.example",
-    "discord_username": "alex"
+    "discord_username": "alex",
+    "photo_consent": false,
+    "photo_consent_updated_at": "2026-09-26T12:00:00+00:00"
   },
   "team": {
     "id": "team-uuid",
@@ -77,6 +79,8 @@ Every success returns the complete refreshed state:
 ```
 
 `profile` and `team` may be `null`. Route by `next_step`: `complete_profile`, `choose_team`, or `team_portal`. Hide captain controls unless `permissions.manage_team` is true. The backend independently enforces permissions. Retain entered form values when a request fails.
+
+Photo consent requires an explicit yes/no choice with neither preselected. Convert form strings to a JSON boolean before submitting: `false` is a valid opt-out, not a missing answer. See the included profile form for the consent wording. Participants can change their choice by saving their full profile. After migration 002, older profiles have `photo_consent: null` and `next_step: "complete_profile"` until they answer; an existing team is retained. Consent and its server-managed change timestamp are returned only in the caller's own profile, never in team rosters. Do not submit the timestamp. Creating/joining teams requires an answer, but either answer is accepted.
 
 Errors have `{ "error": "Human-readable message" }`, with HTTP 400 for invalid operations, 401 for invalid/missing session, 413 for oversized requests, 429 for application rate limits, or 503 for unavailable/unconfigured backend. Do not branch on exact message wording. Refresh state after a stale membership/permission failure. Never automatically retry mutations after a network timeout: fetch `me` first to determine whether the operation committed.
 

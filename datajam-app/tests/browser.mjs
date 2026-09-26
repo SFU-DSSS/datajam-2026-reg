@@ -58,6 +58,8 @@ async function login(page) {
 async function profile(page, name) {
   for (const [key, value] of Object.entries({ name, institution: 'Any University', student_number: '1234', student_email: 'different@school.example', discord_username: name }))
     await page.locator(`#profile-form input[name=${key}]`).fill(value);
+  assert.equal(await page.locator('input[name=photo_consent]:checked').count(), 0);
+  await page.locator('input[name=photo_consent][value=false]').check();
   await page.getByRole('button', { name: 'Save profile', exact: true }).click();
   await status(page, 'Profile saved');
 }
@@ -67,6 +69,7 @@ try {
     create function auth.uid() returns uuid language sql as 'select nullif(current_setting(''request.jwt.claim.sub'',true),'''')::uuid';
     grant usage on schema public,auth to authenticated,anon;`);
   await db.exec(await readFile(new URL('../supabase/001_registration.sql', import.meta.url), 'utf8'));
+  await db.exec(await readFile(new URL('../supabase/002_photo_consent.sql', import.meta.url), 'utf8'));
   for (const id of ids) await db.query('insert into auth.users values ($1,now())', [id]);
   server = spawn(process.execPath, ['server.js'], { cwd: root, env: { ...process.env, PORT: '3107' }, stdio: ['ignore', 'pipe', 'inherit'] });
   await once(server.stdout, 'data');
@@ -78,6 +81,14 @@ try {
   await a.getByRole('button', { name: 'Create account', exact: true }).click();
   await status(a, 'Check your login email');
   await login(a); await profile(a, 'Captain');
+  await a.reload(); await status(a, 'Account loaded');
+  assert.equal(await a.locator('input[name=photo_consent][value=false]').isChecked(), true);
+  await a.locator('#profile-details summary').click();
+  await a.locator('input[name=photo_consent][value=true]').check();
+  await a.getByRole('button', { name: 'Save profile', exact: true }).click();
+  await status(a, 'Profile saved');
+  await a.reload(); await status(a, 'Account loaded');
+  assert.equal(await a.locator('input[name=photo_consent][value=true]').isChecked(), true);
   await a.locator('#create-form input').fill('First team');
   await a.getByRole('button', { name: 'Create team', exact: true }).click();
   await status(a, 'Team created');
