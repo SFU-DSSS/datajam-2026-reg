@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { registrationAction } from "@/lib/datajam/client"
 import {
   INVITE_CODE_PATTERN,
@@ -367,6 +368,15 @@ export function RegistrationDashboard({ initialState, loginEmail }: Registration
 
   return (
     <div className="flex flex-col gap-8">
+      <Card className="gap-4 rounded-2xl border-primary/25 p-6 shadow-none">
+        <SectionHeading eyebrow="// APPLICATION STATUS" title={profile ? (state.admission_status ?? "pending").toUpperCase() : "Not submitted"} />
+        <p className="text-sm text-muted-foreground">{!profile ? "Save your profile to submit your application." : ({ pending: "Your application is awaiting organizer review.", accepted: "You have been accepted! Watch your login email for event details.", waitlisted: "You are on the waitlist. Organizers will contact you if your status changes.", rejected: "Your application was not accepted. Contact the organizers if you have questions." })[state.admission_status ?? "pending"]}</p>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="outline" className={outlineButtonClass} disabled={busy} onClick={() => run("me", {}, "Registration refreshed.")}>REFRESH STATUS</Button>
+          {state.is_admin && <Button asChild className="font-mono text-xs"><Link href="/dashboard/organizer">ORGANIZER DASHBOARD</Link></Button>}
+          <Button asChild variant="outline" className={outlineButtonClass}><Link href="/auth/reset-password">CHANGE PASSWORD</Link></Button>
+        </div>
+      </Card>
 
       <Card className="gap-8 rounded-2xl border-primary/25 p-6 shadow-none sm:p-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -377,13 +387,14 @@ export function RegistrationDashboard({ initialState, loginEmail }: Registration
             </Button>
           )}
         </div>
-        {profile && !editingProfile ? (
+        {profile && profile.photo_consent !== null && !editingProfile ? (
           <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
             {[
               ["STUDENT EMAIL", profile.student_email],
               ["UNIVERSITY / INSTITUTION", profile.institution],
               ["STUDENT NUMBER", profile.student_number],
               ["DISCORD USERNAME", profile.discord_username],
+              ["PHOTO CONSENT", profile.photo_consent ? "Yes — event photography permitted" : "No — do not photograph"],
             ].map(([label, value]) => (
               <div key={label} className="flex flex-col gap-1">
                 <dt className="font-mono text-[11px] font-semibold text-slate-600">{`// ${label}`}</dt>
@@ -415,7 +426,7 @@ export function RegistrationDashboard({ initialState, loginEmail }: Registration
         )}
       </Card>
 
-      {profile &&
+      {profile && (team || profile.photo_consent !== null) &&
         (team ? (
           <TeamPortal team={team} state={state} busy={busy} run={run} setStatus={setStatus} />
         ) : (

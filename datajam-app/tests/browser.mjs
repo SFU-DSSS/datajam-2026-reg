@@ -83,6 +83,7 @@ try {
   await db.exec(await readFile(new URL('../supabase/001_registration.sql', import.meta.url), 'utf8'));
   await db.exec(await readFile(new URL('../supabase/002_photo_consent.sql', import.meta.url), 'utf8'));
   await db.exec(await readFile(new URL('../supabase/003_admin.sql', import.meta.url), 'utf8'));
+  await db.exec(await readFile(new URL('../supabase/004_organizer_tools.sql', import.meta.url), 'utf8'));
   for (const id of ids) await db.query('insert into auth.users values ($1,now(),$2)', [id, `${id.slice(-1)}@example.com`]);
   server = spawn(process.execPath, ['server.js'], { cwd: root, env: { ...process.env, PORT: '3107' }, stdio: ['ignore', 'pipe', 'inherit'] });
   await once(server.stdout, 'data');

@@ -25,10 +25,11 @@ before(async () => {
   assert.equal(upgraded.next_step, 'complete_profile');
   assert.match((await call(0, 'create', { name: 'Pending consent' })).error, /photo consent/);
   await db.exec(await readFile(new URL('../supabase/003_admin.sql', import.meta.url), 'utf8'));
+  await db.exec(await readFile(new URL('../supabase/004_organizer_tools.sql', import.meta.url), 'utf8'));
 });
 after(async () => { await db?.close(); });
 beforeEach(async () => {
-  await db.exec('truncate registration_private.admins, registration_private.members, registration_private.teams, registration_private.profiles, registration_private.attempts cascade; update registration_private.settings set max_team_size = 4;');
+  await db.exec('truncate registration_private.admin_events, registration_private.admins, registration_private.members, registration_private.teams, registration_private.profiles, registration_private.attempts cascade; update registration_private.settings set max_team_size = 4;');
 });
 async function call(i, action, payload = {}, admin = false) {
   // PGlite queues transactions; identity belongs to each transaction, as in PostgREST.
@@ -42,8 +43,8 @@ async function call(i, action, payload = {}, admin = false) {
 const adminCall = (i, action, payload) => call(i, action, payload, true);
 test('admin access is database-controlled and private tables cannot be changed by participants', async () => {
   assert.equal((await adminCall(0, 'access')).is_admin, false);
-  for (const action of ['list','decision','compose','claim','finish']) await assert.rejects(adminCall(0, action), /Organizer access/);
-  for (const table of ['admins', 'decisions', 'emails']) await assert.rejects(db.transaction(async tx => {
+  for (const action of ['list','decision','compose','claim','finish','accept_all','team_create','team_assign','team_remove','team_delete','team_transfer','team_rename','team_rotate']) await assert.rejects(adminCall(0, action), /Organizer access/);
+  for (const table of ['admins', 'decisions', 'emails', 'admin_events']) await assert.rejects(db.transaction(async tx => {
     await tx.exec('set local role authenticated');
     await tx.exec(`select * from registration_private.${table}`);
   }), /permission denied/);
@@ -95,6 +96,72 @@ async function profile(i) {
   return call(i, 'profile', { name: `Student ${i}`, institution: 'Any University', student_number: `N-${i}`, student_email: `student${i}@school.example`, discord_username: `student${i}`, photo_consent: false });
 }
 async function team() { await profile(0); return (await call(0, 'create', { name: 'Data folks' })).team; }
+
+test('accept all changes only pending applications, detects stale counts and queues once', async () => {
+  await db.query('insert into registration_private.admins values ($1)', [ids[7]]);
+  for (let i = 0; i < 5; i++) await profile(i);
+  await adminCall(7, 'decision', { user_id: ids[1], status: 'rejected' });
+  await adminCall(7, 'decision', { user_id: ids[2], status: 'waitlisted' });
+  await adminCall(7, 'decision', { user_id: ids[3], status: 'accepted' });
+  await assert.rejects(adminCall(7, 'accept_all', { expected_count: 3 }), /Applications changed/);
+  assert.equal((await call(0, 'me')).admission_status, 'pending');
+  const result = await adminCall(7, 'accept_all', { expected_count: 2 });
+  assert.equal(result.accepted_count, 2);
+  assert.equal(result.email_ids.length, 2);
+  assert.equal((await call(0, 'me')).admission_status, 'accepted');
+  assert.equal((await call(1, 'me')).admission_status, 'rejected');
+  assert.equal((await call(2, 'me')).admission_status, 'waitlisted');
+  assert.equal((await call(7, 'me')).is_admin, true);
+  assert.equal((await call(0, 'me')).is_admin, false);
+  assert.equal((await adminCall(7, 'accept_all', { expected_count: 0 })).accepted_count, 0);
+  const list = await adminCall(7, 'list');
+  assert.equal(list.emails.length, 3);
+  assert.equal(list.queued_emails.length, 3);
+  assert.ok(list.events.some(e => e.action === 'accept_all'));
+  for (const fn of ['registration_action_base','admin_action_base']) await assert.rejects(db.transaction(async tx => {
+    await tx.exec('set local role authenticated');
+    await tx.exec(`select public.${fn}('me')`);
+  }), /permission denied/);
+});
+
+test('organizer team edits enforce capacity, captain membership, consent and atomic moves', async () => {
+  await db.query('insert into registration_private.admins values ($1)', [ids[7]]);
+  for (let i = 0; i < 6; i++) await profile(i);
+  const a = await adminCall(7, 'team_create', { name: 'Alpha', user_id: ids[0] });
+  const b = await adminCall(7, 'team_create', { name: 'Beta', user_id: ids[2] });
+  await adminCall(7, 'team_assign', { team_id: a.team_id, user_id: ids[1] });
+  await assert.rejects(adminCall(7, 'team_assign', { team_id: b.team_id, user_id: ids[0] }), /Transfer captaincy/);
+  await assert.rejects(adminCall(7, 'team_remove', { team_id: a.team_id, user_id: ids[0] }), /Transfer captaincy/);
+  await assert.rejects(adminCall(7, 'team_transfer', { team_id: a.team_id, user_id: ids[3] }), /current team member/);
+  await assert.rejects(adminCall(7, 'team_create', { name: 'Duplicate', user_id: ids[1] }), /without a team/);
+  await db.query('update registration_private.profiles set photo_consent = null where id = $1', [ids[5]]);
+  await assert.rejects(adminCall(7, 'team_assign', { team_id: a.team_id, user_id: ids[5] }), /photo preference/);
+  await db.exec('update registration_private.settings set max_team_size = 2');
+  await assert.rejects(adminCall(7, 'team_assign', { team_id: a.team_id, user_id: ids[3] }), /full/);
+  const oldCode = (await call(0, 'me')).team.invite_code;
+  await adminCall(7, 'team_assign', { team_id: b.team_id, user_id: ids[1] });
+  assert.notEqual((await call(0, 'me')).team.invite_code, oldCode);
+  await assert.rejects(adminCall(7, 'team_assign', { team_id: b.team_id, user_id: ids[0] }), /full/);
+  assert.equal((await call(0, 'me')).team.id, a.team_id);
+  await adminCall(7, 'team_transfer', { team_id: b.team_id, user_id: ids[1] });
+  assert.equal((await call(1, 'me')).permissions.manage_team, true);
+  await adminCall(7, 'team_remove', { team_id: b.team_id, user_id: ids[2] });
+  assert.equal((await call(2, 'me')).team, null);
+  await adminCall(7, 'team_assign', { team_id: b.team_id, user_id: ids[0] });
+  assert.equal((await adminCall(7, 'list')).teams.length, 1);
+  await adminCall(7, 'team_rename', { team_id: b.team_id, name: 'New Beta' });
+  assert.equal((await call(0, 'me')).team.name, 'New Beta');
+  const code = (await call(0, 'me')).team.invite_code;
+  await adminCall(7, 'team_rotate', { team_id: b.team_id });
+  assert.notEqual((await call(0, 'me')).team.invite_code, code);
+  await adminCall(7, 'team_delete', { team_id: b.team_id });
+  assert.equal((await call(0, 'me')).team, null);
+  assert.equal((await call(1, 'me')).team, null);
+  assert.equal((await adminCall(7, 'list')).registrations.length, 6);
+  const events = (await adminCall(7, 'list')).events;
+  assert.ok(events.every(e => e.actor === ids[7]));
+  assert.ok(events.some(e => e.action === 'team_assign'));
+});
 
 test('photo consent requires an explicit boolean, preserves opt-out, and permits changes', async () => {
   const data = { name: 'Student', institution: 'University', student_number: '123', student_email: 'student@example.com', discord_username: 'student' };

@@ -1,5 +1,5 @@
 import { sendEmail } from '../lib/email.js';
-const actions = new Set(['access', 'list', 'decision', 'compose', 'send']);
+const actions = new Set(['access', 'list', 'decision', 'compose', 'send', 'accept_all', 'team_create', 'team_rename', 'team_rotate', 'team_assign', 'team_remove', 'team_transfer', 'team_delete']);
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });

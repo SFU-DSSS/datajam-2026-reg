@@ -75,12 +75,16 @@ Every success returns the complete refreshed state:
     "members": [{ "id": "uuid", "name": "Alex Student", "discord_username": "alex" }]
   },
   "max_team_size": 4,
+  "admission_status": "pending",
+  "is_admin": false,
   "permissions": { "manage_team": true },
   "next_step": "team_portal"
 }
 ```
 
 `profile` and `team` may be `null`. Route by `next_step`: `complete_profile`, `choose_team`, or `team_portal`. Hide captain controls unless `permissions.manage_team` is true. The backend independently enforces permissions. Retain entered form values when a request fails.
+
+Migration 004 adds the caller's `admission_status` (`pending`, `accepted`, `waitlisted`, `rejected`) and `is_admin`. These fields are read-only; profile updates cannot change admission or organizer access. The styled Next.js frontend uses `/auth/callback` for signup confirmation and `/auth/callback?next=/auth/reset-password` for password recovery, exchanging the PKCE code before loading the destination page.
 
 Photo consent requires an explicit yes/no choice with neither preselected. Convert form strings to a JSON boolean before submitting: `false` is a valid opt-out, not a missing answer. See the included profile form for the consent wording. Participants can change their choice by saving their full profile. After migration 002, older profiles have `photo_consent: null` and `next_step: "complete_profile"` until they answer; an existing team is retained. Consent and its server-managed change timestamp are returned only in the caller's own profile, never in team rosters. Do not submit the timestamp. Creating/joining teams requires an answer, but either answer is accepted.
 
