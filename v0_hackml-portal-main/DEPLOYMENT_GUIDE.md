@@ -25,34 +25,29 @@
 
 ## Step 2: Environment Variables
 
-Your Supabase environment variables are already set up through the v0 integration. If deploying manually, ensure these are added in Vercel:
+Registration data (profiles and teams) lives in the separate `datajam-app` backend and its Supabase project. Deploy that first by following `datajam-app/README.md`. This portal must use the **same** Supabase project so its logins are valid for the backend.
+
+Add these in Vercel:
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-POSTGRES_URL=your_postgres_url
-POSTGRES_PRISMA_URL=your_postgres_prisma_url
-POSTGRES_URL_NON_POOLING=your_postgres_url_non_pooling
-POSTGRES_USER=your_postgres_user
-POSTGRES_PASSWORD=your_postgres_password
-POSTGRES_DATABASE=your_postgres_database
-POSTGRES_HOST=your_postgres_host
-SUPABASE_JWT_SECRET=your_jwt_secret
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_DATAJAM_PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_publishable_or_anon_key
+DATAJAM_API_URL=https://YOUR-DATAJAM-BACKEND.vercel.app
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=your_turnstile_site_key
 ```
+
+- `DATAJAM_API_URL` is the deployed `datajam-app` origin. Requests to `/api/action` are proxied there (see `next.config.mjs`), so the backend's `ALLOWED_ORIGINS` can stay empty.
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` must be set whenever Turnstile is enabled in Supabase, or signup and login will be rejected. Allow this portal's domain in the Turnstile widget.
+- Never add a service-role or secret key.
 
 Optional for email confirmation redirects during local development:
 ```
 NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL=http://localhost:3000/dashboard
 ```
 
-## Step 3: Run Database Scripts
+## Step 3: Database
 
-The database tables need to be created. In v0, you can run the SQL script directly:
-
-1. The `scripts/001_create_tables.sql` file will be automatically detected
-2. Click the "Run Script" button in v0's interface
-3. This creates all tables, RLS policies, and the team code generator function
+The database is created by `datajam-app/supabase/001_registration.sql` (see `datajam-app/README.md`). The old HackML scripts in `scripts/` are not used by the DataJam registration flow.
 
 ## Step 4: Connect Custom Domain
 

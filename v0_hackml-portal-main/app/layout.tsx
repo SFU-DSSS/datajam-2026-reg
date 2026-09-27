@@ -1,17 +1,18 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Geist, Geist_Mono, Unbounded } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Toaster } from "@/components/ui/toaster"
 import { RetroMusicPlayer } from "@/components/retro-music-player"
 import "./globals.css"
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" })
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" })
+const unbounded = Unbounded({ subsets: ["latin"], variable: "--font-unbounded" })
 
 export const metadata: Metadata = {
-  title: "HackML 2026 - Team Registration Portal",
-  description: "Register your team for HackML 2026, a 12-hour machine learning competition hosted by DSSS at SFU",
+  title: "DataJam 2026 - Registration Portal",
+  description: "Register for DataJam 2026, SFU's annual data science case competition hosted by DSSS",
   generator: "v0.app",
   icons: {
     icon: [
@@ -38,14 +39,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`font-sans antialiased`}>
-        {/* Pixelated layered background */}
-        <div className="pixel-stars" />
-        <div className="synthwave-grid">
-          <div className="grid-lines" id="gridLines" />
-        </div>
-        <div className="particles" id="particles" />
+    <html lang="en" className={`${geist.variable} ${geistMono.variable} ${unbounded.variable}`}>
+      <body className="antialiased">
         {children}
         <RetroMusicPlayer />
         <Toaster />
