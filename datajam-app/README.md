@@ -6,20 +6,21 @@ Self-contained backend and plain HTML/CSS/JavaScript test frontend. Deploy this 
 
 - Email/password authentication, login-email verification, logout, password recovery, and Cloudflare Turnstile integration.
 - Required name, institution, student number, student email, and Discord username. Student email is collected, not verified, and may differ from login email.
-- Required yes/no photo-consent choice, with no preselected answer. Opting out does not prevent participation. Participants can update their preference in their profile; only they and database administrators can see it.
+- Required yes/no photo-consent choice, with no preselected answer. Opting out does not prevent participation. Participants can update their preference in their profile; only they and authorized organizers/database administrators can see it.
 - One team per participant, profile required before joining/creating, configurable capacity (default four).
 - Create team, join with a 12-character code or link, roster, copy invitation, leave team.
 - Captain can rename, remove members, regenerate invitations, and transfer captaincy.
 - Removing a member regenerates the code/link. Members can still share the new invitation; removal is not a permanent ban.
 - Captain must transfer before leaving a populated team. Last member leaving deletes the team.
 - No service-role/admin key in the app. Profile privacy and all team rules are enforced in PostgreSQL, not just the interface.
+- Organizer dashboard: search registrations and teams, manage admission status, automatically send acceptance emails, and preview/send custom participant emails through Brevo. See [organizer setup](ADMIN_SETUP.md).
 
 ## 1. Set up Supabase
 
-**Email quick start:** follow [Brevo setup](BREVO_SETUP.md). Supabase Free supports this setup. Signup verification and password resets use Brevo through Supabase SMTP; a private organizer command handles additional event emails.
+**Email quick start:** follow [Brevo setup](BREVO_SETUP.md). Signup verification and password resets use Brevo through Supabase SMTP; the organizer dashboard and private email command send additional event emails through the Brevo API.
 
 1. Create a **new Supabase project**. Do not apply this migration over the example app's database.
-2. Open SQL Editor and execute [`supabase/001_registration.sql`](supabase/001_registration.sql) once, then [`supabase/002_photo_consent.sql`](supabase/002_photo_consent.sql) once. This creates private tables and one authenticated public function, then adds photo consent. Keep `registration_private` out of the exposed API schemas. **If you already ran 001, run only 002** before deploying the updated app; do not recreate the database.
+2. Open SQL Editor and execute migrations [`001`](supabase/001_registration.sql), [`002`](supabase/002_photo_consent.sql), and [`003`](supabase/003_admin.sql), in order, once each. Run only migrations you have not already applied; do not recreate the database. Keep `registration_private` out of the exposed API schemas. Follow [organizer setup](ADMIN_SETUP.md) to grant admin access.
 3. In Authentication, enable email/password signup and **Confirm email**. Set minimum password length to at least eight.
 4. Configure your Site URL and allowed redirect URLs. For local testing add `http://localhost:3000/`. After deploying, add `https://YOUR-PROJECT.vercel.app/` and update Site URL. Add your custom domain later if applicable.
 5. [Connect Brevo SMTP](BREVO_SETUP.md#1-connect-brevo-to-supabase-required). The guide includes the exact host, port, credential fields, and delivery test. Supabase's default email sender has restricted delivery and quotas; configure Brevo before inviting attendees.
@@ -49,7 +50,7 @@ The page shows a setup error until you provide working environment variables. Th
 1. Push the repository to your Git provider and import it into Vercel (or deploy this folder with the Vercel CLI).
 2. Set **Root Directory** to `datajam-app` if importing this whole repository. If uploading only this folder as its own repo, use that repo's root.
 3. Choose **Other** for Framework Preset, Node.js **22.x**, build command **`npm run build`**, output directory **`public`**, and install command **`npm ci`**. `vercel.json` contains the build/output settings.
-4. Add `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `TURNSTILE_SITE_KEY`, and (if needed) `ALLOWED_ORIGINS` from `.env.example` to Vercel's environment settings. The optional `BREVO_*` variables are only needed locally for the organizer email command. Supabase SMTP credentials belong in the Supabase dashboard. Keep `.env.local` out of Git.
+4. Add `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `TURNSTILE_SITE_KEY`, and (if needed) `ALLOWED_ORIGINS` from `.env.example` to Vercel's environment settings. Add `BREVO_*` variables for dashboard email sending. Supabase SMTP credentials belong in the Supabase dashboard. Keep `.env.local` out of Git.
 5. Deploy, then configure that exact deployed URL in Supabase redirect URLs and Turnstile allowed hostnames. Redeploy if environment variables change.
 
 Vercel runs `api/config.js` and `api/action.js` as Node functions and serves `public/` as static files. Supabase hosts the persistent database and authentication. Nothing is stored on Vercel's temporary filesystem.
@@ -125,11 +126,11 @@ An invitation is saved in local storage during onboarding, so verification can r
 
 ## Design and limits
 
-- Private tables have RLS enabled and no client grants. Only the `registration_action` security-definer function can access them for authenticated callers. It derives identity from `auth.uid()` and checks login-email confirmation.
+- Private tables have RLS enabled and no client grants. The `registration_action` and `admin_action` security-definer functions derive identity from `auth.uid()` and check login-email confirmation. Organizer actions additionally require membership in the private admins table.
 - Team changes run in one database transaction. A transaction-scoped advisory lock serializes registration operations for this small event app, preventing over-capacity joins and inconsistent captain changes. For substantially larger deployments, replace it with carefully ordered per-user/per-team locks.
-- Invalid joins count toward a durable limit of 10 attempts per user per 15 minutes; all writes have a 100-per-15-minute limit. Auth has its own provider-side CAPTCHA/rate limits. These limits are abuse controls, not guarantees about hosting bills.
+- Invalid joins count toward a durable limit of 10 attempts per user per 15 minutes; participant writes have a 100-per-15-minute limit. Organizer actions are restricted to trusted admins. Auth has its own provider-side CAPTCHA/rate limits. These limits are abuse controls, not guarantees about hosting bills.
 - Invitation codes contain 48 random bits and are unique in the database; an extremely unlikely collision rejects the operation safely, and the user can retry. Anyone with the current invitation who meets profile/capacity requirements may join.
-- Team rosters expose only member IDs, names, and Discord usernames. A user's full profile is returned only to that user. No student-domain allowlist is imposed.
-- No organizer dashboard, waitlist, payment, registration deadline, or self-service account deletion is included. Do not delete an Auth user who still belongs to a team; membership/captain references deliberately prevent leaving an inconsistent team.
+- Team rosters expose only member IDs, names, and Discord usernames. Full profiles are accessible to their owners and authorized organizers. No student-domain allowlist is imposed.
+- No payment, registration deadline, automatic admission rules, or self-service account deletion is included. Waitlisting is a manual status, not automatic capacity management. Do not delete an Auth user who still belongs to a team; membership/captain references deliberately prevent leaving an inconsistent team.
 
 Provider references: [Vercel Node functions](https://vercel.com/docs/functions/runtimes/node-js), [Supabase CAPTCHA](https://supabase.com/docs/guides/auth/auth-captcha), [Supabase password auth](https://supabase.com/docs/guides/auth/passwords), [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp).

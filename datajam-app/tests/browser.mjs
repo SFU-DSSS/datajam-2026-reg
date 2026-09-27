@@ -40,6 +40,18 @@ async function pageFor(i, existingContext) {
     });
     await route.fulfill({ status: result.error ? 400 : 200, json: result });
   });
+  await page.route('**/api/admin', async route => {
+    const { action, data } = route.request().postDataJSON();
+    try {
+      const result = await db.transaction(async tx => {
+        await tx.query("select set_config('request.jwt.claim.sub', $1, true)", [ids[i]]);
+        await tx.exec('set local role authenticated');
+        return (await tx.query('select public.admin_action($1, $2) as result', [action, JSON.stringify(data)])).rows[0].result;
+      });
+      if (result.email_id) result.email_notice = 'Email remains queued.';
+      await route.fulfill({ json: result });
+    } catch (error) { await route.fulfill({ status: 403, json: { error: error.message } }); }
+  });
   return page;
 }
 async function status(page, text) {
@@ -65,12 +77,13 @@ async function profile(page, name) {
 }
 try {
   await db.exec(`create role anon; create role authenticated; create schema auth;
-    create table auth.users(id uuid primary key, email_confirmed_at timestamptz);
+    create table auth.users(id uuid primary key, email_confirmed_at timestamptz, email text);
     create function auth.uid() returns uuid language sql as 'select nullif(current_setting(''request.jwt.claim.sub'',true),'''')::uuid';
     grant usage on schema public,auth to authenticated,anon;`);
   await db.exec(await readFile(new URL('../supabase/001_registration.sql', import.meta.url), 'utf8'));
   await db.exec(await readFile(new URL('../supabase/002_photo_consent.sql', import.meta.url), 'utf8'));
-  for (const id of ids) await db.query('insert into auth.users values ($1,now())', [id]);
+  await db.exec(await readFile(new URL('../supabase/003_admin.sql', import.meta.url), 'utf8'));
+  for (const id of ids) await db.query('insert into auth.users values ($1,now(),$2)', [id, `${id.slice(-1)}@example.com`]);
   server = spawn(process.execPath, ['server.js'], { cwd: root, env: { ...process.env, PORT: '3107' }, stdio: ['ignore', 'pipe', 'inherit'] });
   await once(server.stdout, 'data');
   browser = await chromium.launch(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH, headless: true } : { channel: 'chrome', headless: true });
@@ -149,10 +162,35 @@ try {
   await a.locator('#password-form input').fill('new-test-password');
   await a.getByRole('button', { name: 'Save password', exact: true }).click();
   await status(a, 'Password updated');
+  await a.getByRole('button', { name: 'Organizer dashboard', exact: true }).click();
+  await status(a, 'Organizer access required');
+  assert.equal(await a.locator('#admin-panel').isVisible(), false);
+  await db.query('insert into registration_private.admins values ($1)', [ids[0]]);
+  await a.getByRole('button', { name: 'Organizer dashboard', exact: true }).click();
+  await status(a, 'Organizer dashboard loaded');
+  assert.equal(await a.locator('#admin-rows article').count(), 2);
+  const registration = a.locator('#admin-rows article').first();
+  await registration.locator('select').selectOption('accepted');
+  await registration.getByRole('button', { name: 'Save status' }).click();
+  await status(a, 'Registration updated');
+  assert.equal(await a.locator('#admin-history details').count(), 1);
+  await a.locator('#admin-filter').selectOption('accepted');
+  assert.equal(await a.locator('#admin-rows article').count(), 1);
+  await a.getByRole('button', { name: 'Select visible registrations' }).click();
+  await a.locator('#admin-email input').fill('Event details');
+  await a.locator('#admin-email textarea').fill('Please bring a laptop.');
+  await a.getByRole('button', { name: 'Preview email', exact: true }).click();
+  assert.match(await a.locator('#email-preview-text').textContent(), /To \(1 individual emails\)/);
+  await a.getByRole('button', { name: 'Send emails', exact: true }).click();
+  await status(a, '1/1: Email remains queued');
+  await a.waitForFunction(() => document.querySelectorAll('#admin-history details').length === 2);
   await a.setViewportSize({ width: 390, height: 844 });
   assert.equal(await a.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await a.getByRole('button', { name: 'Log out', exact: true }).click();
+  await status(a, 'Logged out');
+  assert.equal(await a.locator('#admin-rows article').count(), 0);
   assert.deepEqual(errors, []);
-  console.log('Chrome smoke test passed: signup notice, login, profile, invitation onboarding, create/join, rename, rotate, remove, transfer, leave, logout, password recovery, mobile layout. Auth was mocked; SQL was real.');
+  console.log('Chrome smoke test passed: participant flows, organizer access denial, acceptance, filtering, email preview/queue, logout data clearing, and mobile layout. Auth and email transport were mocked; SQL was real.');
 } finally {
   await browser?.close(); server?.kill(); await db.close();
 }

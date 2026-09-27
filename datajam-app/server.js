@@ -2,6 +2,7 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import config from './api/config.js';
 import action from './api/action.js';
+import admin from './api/admin.js';
 const files = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'] };
 http.createServer(async (req, res) => {
   res.status = code => { res.statusCode = code; return res; };
@@ -9,11 +10,11 @@ http.createServer(async (req, res) => {
   const path = new URL(req.url, 'http://localhost').pathname;
   try {
     if (path === '/api/config') return config(req, res);
-    if (path === '/api/action') {
+    if (path === '/api/action' || path === '/api/admin') {
       let body = '';
       for await (const chunk of req) { body += chunk; if (body.length > 8192) return res.status(413).json({ error: 'Request too large' }); }
       req.body = body;
-      return action(req, res);
+      return (path === '/api/admin' ? admin : action)(req, res);
     }
     if (!files[path]) return res.status(404).end('Not found');
     res.setHeader('Content-Type', files[path][1]);

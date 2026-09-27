@@ -1,5 +1,7 @@
 # Frontend integration contract
 
+For organizer registration management and email endpoints, see [organizer setup and API](ADMIN_SETUP.md). These use `/api/admin` with the same login session and require an explicit database admin grant. The participant endpoint below remains separate.
+
 ## Authentication
 
 Use `@supabase/supabase-js` with the public project URL and publishable/anon key:

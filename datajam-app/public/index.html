@@ -23,6 +23,28 @@
     </section>
     <section id="account" hidden>
       <p>Signed in as <strong id="account-email"></strong> <button id="logout">Log out</button></p>
+      <button id="admin-open">Organizer dashboard</button>
+      <section id="admin-panel" hidden>
+        <h2>Manage registrations</h2>
+        <p>Acceptance is per participant. Accepting someone sends one acceptance email to their verified login address. Other status changes do not send an email.</p>
+        <button id="admin-refresh">Refresh registrations and emails</button>
+        <label>Search registrations <input id="admin-search" type="search" placeholder="Name, email, institution, or team"></label>
+        <label>Status <select id="admin-filter"><option value="">All statuses</option><option>pending</option><option>accepted</option><option>waitlisted</option><option>rejected</option></select></label>
+        <p id="admin-count"></p>
+        <button id="admin-select">Select visible registrations</button><button id="admin-clear">Clear selection</button>
+        <div id="admin-rows"></div>
+        <h3>Email selected participants</h3>
+        <p>Each participant receives a separate email at their login address.</p>
+        <form id="admin-email">
+          <label>Subject <input name="subject" required maxlength="200"></label>
+          <label>Message <textarea name="text" required maxlength="5000" rows="8"></textarea></label>
+          <button>Preview email</button>
+        </form>
+        <div id="email-preview" hidden><pre id="email-preview-text"></pre><button id="admin-send">Send emails</button></div>
+        <h3>Recent email history</h3>
+        <p>Latest 200 emails. “Submitted” means Brevo accepted the email, not confirmed delivery. For “sending” or “unknown,” check Brevo logs before composing a replacement.</p>
+        <div id="admin-history"></div>
+      </section>
       <form id="password-form" hidden>
         <h2>Set a new password</h2>
         <label>New password <input name="password" type="password" autocomplete="new-password" minlength="8" required></label>

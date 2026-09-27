@@ -15,3 +15,8 @@ form + form { margin-top: 1.5rem; border-top: 1px solid #ddd; padding-top: .8rem
 #message.error { background: #ffe2e2; }
 li { margin: .7rem 0; }
 [hidden] { display: none !important; }
+select, textarea { box-sizing: border-box; max-width: 100%; font: inherit; padding: .5rem; }
+textarea { width: 100%; }
+#admin-panel input[type="checkbox"] { display: inline-block; width: auto; }
+#admin-panel article { border-bottom: 1px solid #d4d9e0; padding: 1rem 0; }
+#admin-panel p, #admin-panel pre, #admin-panel summary { white-space: pre-wrap; overflow-wrap: anywhere; }

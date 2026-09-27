@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
+import { setupAdmin } from './admin.js';
 const $ = id => document.getElementById(id);
 let client, state, widget, captchaToken = '', busy = false;
+let resetAdmin = () => {};
 let recovering = new URLSearchParams(location.hash.slice(1)).get('type') === 'recovery';
 const invitation = new URLSearchParams(location.search).get('invite');
 if (invitation && /^[a-f0-9]{12}$/i.test(invitation)) localStorage.setItem('pending-invite', invitation);
@@ -73,7 +75,7 @@ async function refresh() {
   const { data: { session } } = await client.auth.getSession();
   $('auth').hidden = !!session;
   $('account').hidden = !session;
-  if (!session) { state = null; return; }
+  if (!session) { state = null; resetAdmin(); return; }
   $('account-email').textContent = session.user.email;
   $('profile-form').elements.student_email.value ||= session.user.email;
   $('password-form').hidden = !recovering;
@@ -100,6 +102,7 @@ async function init() {
   const config = await res.json();
   if (!res.ok) throw new Error(config.error);
   client = createClient(config.url, config.key);
+  resetAdmin = setupAdmin(client, run, message);
   // Supabase consumes verification/recovery URL fragments and persists the session.
   client.auth.onAuthStateChange((event) => {
     if (event === 'PASSWORD_RECOVERY') recovering = true;

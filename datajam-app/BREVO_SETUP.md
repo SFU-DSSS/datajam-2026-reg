@@ -33,7 +33,7 @@ If delivery fails, check Brevo sender/domain verification and account activation
 
 ## 2. Send other event emails (optional)
 
-The repository includes a private organizer command for individual event messages. It runs on your machine, with no public sending endpoint. Signup verification and password resets work without this section. Saving a profile does **not** automatically send a separate registration receipt.
+The repository includes an [organizer dashboard](ADMIN_SETUP.md) for automatic acceptance emails and custom messages to selected participants, plus a private command for individual event messages. The dashboard uses an authenticated, organizer-only endpoint. Configure the variables below in the deployed server environment for dashboard sending, or locally for the command. Signup verification and password resets work without this section. Saving a profile does **not** automatically send a separate registration receipt.
 
 1. In Brevo **SMTP & API → API Keys**, create an **API key**. This is separate from the SMTP key used above.
 2. In `datajam-app/.env.local`, fill in:

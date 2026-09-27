@@ -10,13 +10,13 @@ before(async () => {
   await db.exec(`
     create role anon; create role authenticated;
     create schema auth;
-    create table auth.users (id uuid primary key, email_confirmed_at timestamptz);
+    create table auth.users (id uuid primary key, email_confirmed_at timestamptz, email text);
     create function auth.uid() returns uuid language sql as
       'select nullif(current_setting(''request.jwt.claim.sub'', true), '''')::uuid';
     grant usage on schema public, auth to authenticated, anon;
   `);
   await db.exec(await readFile(new URL('../supabase/001_registration.sql', import.meta.url), 'utf8'));
-  for (const id of ids) await db.query('insert into auth.users values ($1, now())', [id]);
+  for (const id of ids) await db.query('insert into auth.users values ($1, now(), $2)', [id, `${id}@example.com`]);
   await db.query(`insert into registration_private.profiles values ($1, 'Existing attendee', 'University', '123', 'old@example.com', 'old')`, [ids[0]]);
   await db.exec(await readFile(new URL('../supabase/002_photo_consent.sql', import.meta.url), 'utf8'));
   const upgraded = await call(0, 'me');
@@ -24,20 +24,73 @@ before(async () => {
   assert.equal(upgraded.profile.photo_consent_updated_at, null);
   assert.equal(upgraded.next_step, 'complete_profile');
   assert.match((await call(0, 'create', { name: 'Pending consent' })).error, /photo consent/);
+  await db.exec(await readFile(new URL('../supabase/003_admin.sql', import.meta.url), 'utf8'));
 });
 after(async () => { await db?.close(); });
 beforeEach(async () => {
-  await db.exec('truncate registration_private.members, registration_private.teams, registration_private.profiles, registration_private.attempts cascade; update registration_private.settings set max_team_size = 4;');
+  await db.exec('truncate registration_private.admins, registration_private.members, registration_private.teams, registration_private.profiles, registration_private.attempts cascade; update registration_private.settings set max_team_size = 4;');
 });
-async function call(i, action, payload = {}) {
+async function call(i, action, payload = {}, admin = false) {
   // PGlite queues transactions; identity belongs to each transaction, as in PostgREST.
   return db.transaction(async tx => {
     await tx.query("select set_config('request.jwt.claim.sub', $1, true)", [ids[i]]);
     await tx.exec('set local role authenticated');
-    const result = await tx.query('select public.registration_action($1, $2::jsonb) as result', [action, JSON.stringify(payload)]);
+    const result = await tx.query(`select public.${admin ? 'admin_action' : 'registration_action'}($1, $2::jsonb) as result`, [action, JSON.stringify(payload)]);
     return result.rows[0].result;
   });
 }
+const adminCall = (i, action, payload) => call(i, action, payload, true);
+test('admin access is database-controlled and private tables cannot be changed by participants', async () => {
+  assert.equal((await adminCall(0, 'access')).is_admin, false);
+  for (const action of ['list','decision','compose','claim','finish']) await assert.rejects(adminCall(0, action), /Organizer access/);
+  for (const table of ['admins', 'decisions', 'emails']) await assert.rejects(db.transaction(async tx => {
+    await tx.exec('set local role authenticated');
+    await tx.exec(`select * from registration_private.${table}`);
+  }), /permission denied/);
+  await assert.rejects(db.transaction(async tx => {
+    await tx.exec('set local role anon'); await tx.exec("select public.admin_action('access')");
+  }), /permission denied/);
+  await db.query('insert into registration_private.admins values ($1)', [ids[7]]);
+  assert.equal((await adminCall(7, 'access')).is_admin, true);
+  await db.query('delete from registration_private.admins where user_id = $1', [ids[7]]);
+  await assert.rejects(adminCall(7, 'list'), /Organizer access/);
+});
+test('admin decisions queue one acceptance, use verified login email, and claim each email once', async () => {
+  await db.query('insert into registration_private.admins values ($1)', [ids[7]]);
+  await team();
+  const list = await adminCall(7, 'list');
+  assert.equal(list.registrations[0].status, 'pending');
+  assert.equal(list.registrations[0].team_name, 'Data folks');
+  await assert.rejects(adminCall(7, 'decision', { user_id: ids[0], status: 'bad' }), /Invalid status/);
+  const first = await adminCall(7, 'decision', { user_id: ids[0], status: 'accepted' });
+  const second = await adminCall(7, 'decision', { user_id: ids[0], status: 'accepted' });
+  assert.equal(first.email_id, second.email_id);
+  await adminCall(7, 'decision', { user_id: ids[0], status: 'waitlisted' });
+  assert.equal((await adminCall(7, 'claim', { id: first.email_id })).email, null);
+  assert.equal((await adminCall(7, 'list')).emails[0].state, 'cancelled');
+  assert.equal((await adminCall(7, 'decision', { user_id: ids[0], status: 'accepted' })).email_id, first.email_id);
+  const claims = await Promise.all([adminCall(7, 'claim', { id: first.email_id }), adminCall(7, 'claim', { id: first.email_id })]);
+  assert.equal(claims.filter(r => r.email).length, 1);
+  const email = claims.find(r => r.email).email;
+  assert.equal(email.recipient, `${ids[0]}@example.com`);
+  await adminCall(7, 'finish', { id: email.id, state: 'submitted', message_id: 'brevo-id' });
+  assert.equal((await adminCall(7, 'decision', { user_id: ids[0], status: 'accepted' })).email_id, null);
+  assert.equal((await adminCall(7, 'list')).emails.length, 1);
+  // Participant profile updates cannot set or reset the admission decision.
+  await profile(0);
+  assert.equal((await adminCall(7, 'list')).registrations[0].status, 'accepted');
+});
+test('manual email request IDs are idempotent and unknown sends cannot be claimed again', async () => {
+  await db.query('insert into registration_private.admins values ($1)', [ids[7]]); await profile(0);
+  const payload = { id: ids[1], user_id: ids[0], subject: 'Event details', text: 'Hello!' };
+  await adminCall(7, 'compose', payload); await adminCall(7, 'compose', payload);
+  await assert.rejects(adminCall(7, 'compose', { ...payload, text: 'Different' }), /already used/);
+  await assert.rejects(adminCall(7, 'compose', { ...payload, subject: 'Bad\nsubject' }), /Provide a subject/);
+  await adminCall(7, 'claim', { id: payload.id });
+  await adminCall(7, 'finish', { id: payload.id, state: 'unknown', detail: 'Network timeout' });
+  assert.equal((await adminCall(7, 'claim', { id: payload.id })).email, null);
+  assert.equal((await adminCall(7, 'list')).emails.length, 1);
+});
 async function profile(i) {
   return call(i, 'profile', { name: `Student ${i}`, institution: 'Any University', student_number: `N-${i}`, student_email: `student${i}@school.example`, discord_username: `student${i}`, photo_consent: false });
 }
