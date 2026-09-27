@@ -9,9 +9,11 @@ export interface Profile {
   student_number: string
   student_email: string
   discord_username: string
+  photo_consent: boolean | null
+  photo_consent_updated_at: string | null
 }
 
-export type ProfileInput = Omit<Profile, "id">
+export type ProfileInput = Omit<Profile, "id" | "photo_consent_updated_at">
 
 export interface TeamMember {
   id: string
@@ -28,6 +30,8 @@ export interface Team {
 }
 
 export interface RegistrationState {
+  admission_status: "pending" | "accepted" | "waitlisted" | "rejected"
+  is_admin: boolean
   user_id: string
   profile: Profile | null
   team: Team | null

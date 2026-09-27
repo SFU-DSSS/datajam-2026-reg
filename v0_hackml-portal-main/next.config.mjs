@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  agentRules: false,
   images: {
     unoptimized: true,
   },
@@ -10,7 +8,7 @@ const nextConfig = {
   async rewrites() {
     const apiUrl = process.env.DATAJAM_API_URL
     if (!apiUrl) return []
-    return [{ source: "/api/action", destination: `${apiUrl.replace(/\/$/, "")}/api/action` }]
+    return ["action", "admin"].map((route) => ({ source: `/api/${route}`, destination: `${apiUrl.replace(/\/$/, "")}/api/${route}` }))
   },
   async redirects() {
     return [

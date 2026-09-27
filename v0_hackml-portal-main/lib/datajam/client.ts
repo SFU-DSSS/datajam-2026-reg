@@ -4,7 +4,7 @@ import type { RegistrationAction, RegistrationState } from "./types"
 // Calls the datajam-app backend through the same-origin /api/action rewrite (see next.config.mjs).
 export async function registrationAction(
   action: RegistrationAction,
-  data: Record<string, string> = {},
+  data: Record<string, string | boolean | null> = {},
 ): Promise<RegistrationState> {
   const supabase = createClient()
   const {

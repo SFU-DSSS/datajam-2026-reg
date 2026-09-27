@@ -86,6 +86,9 @@ export default function LoginPage() {
                   {isLoading ? "Signing in..." : "Sign In"}
                 </button>
                 <div className="form-link">
+                  <Link href="/auth/forgot-password" className="retro-link">Forgot your password?</Link>
+                </div>
+                <div className="form-link">
                   Don't have an account?{" "}
                   <Link href="/auth/sign-up" className="retro-link">
                     Sign up

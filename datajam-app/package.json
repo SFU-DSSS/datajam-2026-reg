@@ -8,7 +8,8 @@
     "build": "esbuild frontend/app.js --bundle --format=esm --outfile=public/app.js",
     "dev": "npm run build && node --env-file=.env.local server.js",
     "test": "node --test tests/*.test.js",
-    "test:browser": "npm run build && node tests/browser.mjs"
+    "test:browser": "npm run build && node tests/browser.mjs",
+    "test:portal": "node tests/portal-browser.mjs"
   },
   "dependencies": { "@supabase/supabase-js": "2.57.4" },
   "devDependencies": { "esbuild": "0.25.10", "@electric-sql/pglite": "0.3.10", "playwright": "1.63.0" }

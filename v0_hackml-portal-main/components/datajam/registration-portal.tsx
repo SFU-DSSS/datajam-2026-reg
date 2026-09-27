@@ -52,7 +52,7 @@ function PortalContent({ registration }: { registration: RegistrationLookup }) {
   }
 
   const { state, email } = registration
-  if (state.next_step === "complete_profile") return <PortalProfileForm defaultStudentEmail={email} />
+  if (state.next_step === "complete_profile") return <PortalProfileForm initialProfile={state.profile} defaultStudentEmail={email} />
 
   return (
     <div className="flex flex-col gap-6">
