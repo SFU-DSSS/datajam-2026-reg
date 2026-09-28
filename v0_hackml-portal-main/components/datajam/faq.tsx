@@ -22,10 +22,7 @@ const faqs = [
 export function Faq() {
   return (
     <section id="faq" className="flex scroll-mt-4 flex-col items-center gap-14 px-4 py-20 sm:px-8 lg:py-[120px]">
-      <div className="flex flex-col items-center gap-4 text-center">
-        <p className="font-mono text-xs font-bold text-primary">FREQUENTLY ASKED QUESTIONS</p>
-        <h2 className="font-display text-[32px] font-extrabold text-foreground">FAQ_</h2>
-      </div>
+      <h2 className="text-center font-display text-[32px] font-extrabold text-foreground">FAQ</h2>
       <Accordion type="multiple" defaultValue={faqs.map((faq) => faq.question)} className="flex w-full max-w-[800px] flex-col gap-4">
         {faqs.map((faq) => (
           <AccordionItem

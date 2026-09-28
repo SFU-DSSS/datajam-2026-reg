@@ -25,7 +25,7 @@ export function Hero() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-4">
             <Badge className="gap-2 rounded-full border-2 border-primary bg-white p-2 pr-2 font-mono text-xs font-bold text-background">
-              <Image src="/datajam/panda.png" alt="" width={32} height={32} className="rounded-full" />
+              <Image src="/datajam/panda-logo-color.png" alt="" width={24} height={32} />
               SFU DATA SCIENCE
             </Badge>
             <Image src="/datajam/triangles.svg" alt="" width={44} height={12} />
@@ -36,12 +36,17 @@ export function Hero() {
           </h1>
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <Badge className="rounded-md px-4 py-2.5 font-display text-sm font-extrabold">NOV 8TH</Badge>
-          <Badge variant="secondary" className="rounded-md border-border px-4 py-2.5 font-display text-sm font-extrabold">
-            SUB BALLROOM · SFU
-          </Badge>
-        </div>
+        <dl className="flex flex-wrap gap-x-10 gap-y-4">
+          {[
+            { label: "DATE", value: "NOV 8TH" },
+            { label: "VENUE", value: "SUB BALLROOM · SFU" },
+          ].map((item) => (
+            <div key={item.label} className="flex flex-col gap-1 border-l-2 border-primary pl-4">
+              <dt className="font-mono text-[11px] font-semibold text-muted-foreground">{`// ${item.label}`}</dt>
+              <dd className="font-display text-lg font-extrabold text-foreground">{item.value}</dd>
+            </div>
+          ))}
+        </dl>
 
         <div className="flex flex-col gap-4">
           <p className="text-lg leading-[1.6] text-muted-foreground">
