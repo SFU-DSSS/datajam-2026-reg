@@ -1,5 +1,4 @@
 import Image from "next/image"
-import { Badge } from "@/components/ui/badge"
 
 const terminalLines = [
   "$ python --version",
@@ -24,10 +23,10 @@ export function Hero() {
       <div className="flex w-full min-w-0 flex-1 flex-col gap-10">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-4">
-            <Badge className="gap-2 rounded-full border-2 border-primary bg-white p-2 pr-2 font-mono text-xs font-bold text-background">
-              <Image src="/datajam/panda-logo-color.png" alt="" width={24} height={32} />
-              SFU DATA SCIENCE
-            </Badge>
+            <div className="flex items-center gap-3">
+              <Image src="/datajam/panda-logo.png" alt="" width={35} height={48} />
+              <span className="font-mono text-base font-bold whitespace-nowrap text-foreground">SFU DATA SCIENCE</span>
+            </div>
             <Image src="/datajam/triangles.svg" alt="" width={44} height={12} />
           </div>
           <h1 className="flex flex-col gap-1 font-display text-6xl leading-none font-black text-shadow-[0_0_20px_rgba(0,240,255,0.5)] sm:text-[80px]">
@@ -53,7 +52,7 @@ export function Hero() {
             DataJam is SFU&apos;s annual data science case competition. Work with real-world data, develop
             recommendations, and present to a 12-judge panel.
           </p>
-          <p className="font-mono text-sm text-teal-500">{">>> 3–4 DAYS OF FOCUSED DATA ANALYSIS"}</p>
+          <p className="font-mono text-sm text-teal-500">{">>> 3 DAYS OF FOCUSED DATA ANALYSIS"}</p>
         </div>
       </div>
 
