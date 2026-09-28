@@ -3,7 +3,11 @@
 import type React from "react"
 
 import { createClient } from "@/lib/supabase/client"
-import { Navbar } from "@/components/navbar"
+import { PageShell } from "@/components/datajam/page-shell"
+import { FieldHeader, FieldHint, TerminalInput } from "@/components/datajam/form-fields"
+import { StatusLine } from "@/components/datajam/status-line"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import { Turnstile, TURNSTILE_SITE_KEY } from "@/components/turnstile"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -46,62 +50,49 @@ export default function LoginPage() {
   }
 
   return (
-    <>
-      <Navbar />
-      <main>
-        <section className="hero">
-          <div className="container">
-            <div className="hero-content">
-              <h1>
-                <span className="main-title">Welcome Back</span>
-              </h1>
-              <p className="hero-subtitle">Sign in to access your DataJam 2026 registration</p>
-              <form onSubmit={handleLogin} className="retro-form">
-                <div className="form-group">
-                  <label htmlFor="email" className="retro-label">Email</label>
-                  <input
-                    id="email"
-                    type="email"
-                    className="retro-input"
-                    placeholder="data8@sfu.ca"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="password" className="retro-label">Password</label>
-                  <input
-                    id="password"
-                    type="password"
-                    className="retro-input"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <Turnstile onToken={setCaptchaToken} onError={setError} resetKey={captchaResetKey} />
-                {error && <p className="form-error">{error}</p>}
-                <button type="submit" className="cta-button" disabled={isLoading}>
-                  {isLoading ? "Signing in..." : "Sign In"}
-                </button>
-                <div className="form-link">
-                  <Link href="/auth/forgot-password" className="retro-link">Forgot your password?</Link>
-                </div>
-                <div className="form-link">
-                  Don't have an account?{" "}
-                  <Link href="/auth/sign-up" className="retro-link">
-                    Sign up
-                  </Link>
-                </div>
-              </form>
-            </div>
+    <PageShell>
+      <main className="mx-auto max-w-xl px-4 py-20">
+        <Card className="gap-6 rounded-2xl border-primary/25 p-8 shadow-[0_12px_48px_rgba(0,240,255,0.05)]">
+          <div className="flex flex-col gap-2">
+            <h1 className="font-display text-2xl">Welcome back_</h1>
+            <p className="text-sm text-muted-foreground">Sign in to access your DataJam 2026 registration.</p>
           </div>
-        </section>
+          <form onSubmit={handleLogin} className="flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <FieldHeader htmlFor="email" label="EMAIL" required={false} />
+              <TerminalInput
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder="data8@sfu.ca"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <FieldHeader htmlFor="password" label="PASSWORD" required={false} />
+              <TerminalInput
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <Turnstile onToken={setCaptchaToken} onError={setError} resetKey={captchaResetKey} />
+            <StatusLine status={error ? { kind: "error", text: error } : null} />
+            <Button type="submit" className="h-12 font-mono text-xs" disabled={isLoading}>
+              {isLoading ? "SIGNING IN…" : "SIGN IN"}
+            </Button>
+            <div className="flex flex-wrap justify-between gap-4 font-mono text-xs text-primary">
+              <Link href="/auth/forgot-password">FORGOT PASSWORD?</Link>
+              <Link href="/auth/sign-up">CREATE ACCOUNT</Link>
+            </div>
+          </form>
+        </Card>
       </main>
-      <footer>
-        <p>Hosted by the Data Science Student Society (DSSS) at Simon Fraser University</p>
-      </footer>
-    </>
+    </PageShell>
   )
 }

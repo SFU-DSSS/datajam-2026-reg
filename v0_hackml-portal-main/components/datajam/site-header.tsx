@@ -3,9 +3,8 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 
 const links = [
-  { href: "/#about", label: "ABOUT" },
-  { href: "/#schedule", label: "SCHEDULE" },
-  { href: "/#prizes", label: "PRIZES" },
+  { href: "/schedule", label: "SCHEDULE" },
+  { href: "/rules", label: "RULES" },
   { href: "/#faq", label: "FAQ" },
 ]
 
@@ -17,8 +16,8 @@ export function SiteHeader() {
           <Image src="/datajam/logo.svg" alt="" width={36} height={36} />
           <span className="font-mono text-base font-bold whitespace-nowrap text-foreground">SFU DATA SCIENCE</span>
         </Link>
-        <nav className="flex items-center gap-8">
-          <ul className="hidden items-center gap-8 md:flex">
+        <nav className="flex items-center gap-6 lg:gap-8">
+          <ul className="hidden items-center gap-5 md:flex lg:gap-8">
             {links.map((link) => (
               <li key={link.href}>
                 <a
