@@ -5,7 +5,7 @@ const faqs = [
   {
     question: "When are sign-ups due?",
     answer:
-      "Sign-ups close October 17. DSSS will match incomplete teams October 18–21; teams then select a 3 day working period by October 24.",
+      "Sign-ups close October 17. We will match incomplete teams October 18–21; teams then select a 3 day working period by October 24.",
   },
   {
     question: "What is the team size rule?",
@@ -15,7 +15,7 @@ const faqs = [
   {
     question: "What is the competition timeline?",
     answer:
-      "Working periods run October 25–November 7. The case and dataset are issued on day one; presentation slides are due on the final day. DataJam is November 8.",
+      "Each team selects their own working period of three days within October 25 - November 7. The case and dataset are issued on day one. DataJam presentations are in-person on November 8th.",
   },
 ]
 

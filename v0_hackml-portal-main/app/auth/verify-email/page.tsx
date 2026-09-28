@@ -16,7 +16,7 @@ export default function VerifyEmailPage() {
             Click the link in your email to activate your account. Once verified, you can sign in and complete your
             registration.
           </p>
-          <div className="flex flex-wrap gap-4 font-mono text-xs text-primary">
+          <div className="flex w-full items-center justify-between font-mono text-xs text-primary">
             <Link href="/auth/login">SIGN IN</Link>
             <Link href="/">HOME</Link>
           </div>

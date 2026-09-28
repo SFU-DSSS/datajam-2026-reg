@@ -5,7 +5,7 @@ const cards = [
     eyebrow: "// TEAM PRIZES",
     eyebrowClass: "text-teal-500",
     title: "$400 in Total Prize Value",
-    body: "Planned prize breakdown: first place ($50 in prize value per person), second place ($30 in prize value per person), and third place ($20 in prize value per person).",
+    body: "First place ($50 in prize value per person), second place ($30 in prize value per person), and third place ($20 in prize value per person).",
   },
   {
     eyebrow: "// COMPETITION FORMAT",
