@@ -126,7 +126,7 @@ try {
   await login(participant,1);
   assert.equal(await participant.getByRole('link',{ name:'ORGANIZER DASHBOARD',exact:true }).count(),0);
   await participant.goto(`${origin}/dashboard/organizer`);
-  await participant.getByText('Organizer access required.',{ exact:true }).waitFor();
+  await participant.getByRole('alert').filter({ hasText: 'Organizer access required.' }).waitFor();
   assert.equal(await participant.locator('article').count(),0);
   await participant.goto(`${origin}/dashboard`);
   await participant.getByRole('button',{ name:'EDIT PROFILE',exact:true }).click();
@@ -147,7 +147,7 @@ try {
   await participant.getByLabel('New password',{ exact:true }).fill('updated-fixture-password');
   await participant.getByLabel('Confirm password',{ exact:true }).fill('updated-fixture-password');
   await participant.getByRole('button',{ name:'SAVE PASSWORD',exact:true }).click();
-  await participant.getByText('Password updated. You can return to your dashboard.',{ exact:true }).waitFor();
+  await participant.getByRole('status').filter({ hasText: 'Password updated. You can return to your dashboard.' }).waitFor();
   assert.equal(passwordUpdates,1);
   await participant.goto(`${origin}/auth/forgot-password`);
   await participant.getByLabel('Login email',{ exact:true }).fill(emailFor(1));
