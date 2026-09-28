@@ -1,4 +1,3 @@
-import Link from "next/link"
 import { Navbar } from "@/components/navbar"
 
 export default function SchedulePage() {
@@ -18,28 +17,19 @@ export default function SchedulePage() {
               <div className="info-section">
                 <div className="feature-list">
                   <div className="feature-item">
-                    <strong>8:30 AM - Registration & Check-in:</strong> <br />Participants arrive, check in, and receive competition credentials and materials.
+                    <strong>October 17 — Registration Closes:</strong> <br />Complete your DataJam 2026 registration.
                   </div>
                   <div className="feature-item">
-                    <strong>9:15 AM - Opening Ceremony:</strong> <br />Welcome address, competition overview, and introduction to the Kaggle dataset and problem statement.
+                    <strong>October 18–21 — Team Matching:</strong> <br />DSSS matches incomplete teams. Teams may have up to four members.
                   </div>
                   <div className="feature-item">
-                    <strong>9:30 AM - Competition Begins:</strong> <br />Teams start working on their machine learning models. Dataset and problem details are released.
+                    <strong>By October 24 — Working Period Selection:</strong> <br />Teams select a 3–4 day working period.
                   </div>
                   <div className="feature-item">
-                    <strong>12:00 PM - Lunch Break:</strong> <br />Complimentary lunch provided for all participants. Networking opportunity.
+                    <strong>October 25–November 7 — Case Working Periods:</strong> <br />Receive the business case and dataset on day one of your assigned period. Presentation slides are due on the final day.
                   </div>
                   <div className="feature-item">
-                    <strong>3:00 PM - Mid-point Check-in:</strong> <br />Brief progress update and Q&A session with competition organizers.
-                  </div>
-                  <div className="feature-item">
-                    <strong>6:00 PM - Final Submission Deadline:</strong> <br />All model submissions must be completed and submitted through Kaggle by this time.
-                  </div>
-                  <div className="feature-item">
-                    <strong>6:15 PM - Dinner & Networking:</strong> <br />Complimentary dinner provided for all participants. Networking opportunity.
-                  </div>
-                  <div className="feature-item">
-                    <strong>8:00 PM - Closing & Awards Ceremony:</strong> <br />Event concludes with winners and awards announcement.
+                    <strong>November 8 — DataJam at the SUB Ballroom, SFU:</strong> <br />Teams present their analysis and recommendations. Preliminary round: 7-minute presentation and 3-minute Q&amp;A. Final round: 10-minute presentation and 5-minute Q&amp;A.
                   </div>
                 </div>
               </div>

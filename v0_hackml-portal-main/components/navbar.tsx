@@ -42,7 +42,7 @@ export function Navbar() {
         <div className="container">
           <div className="flex items-center justify-between w-full">
             <Link href="/" className="nav-logo" onClick={closeMenu}>
-              HackML 2026
+              DataJam 2026
             </Link>
             <button
               className={`hamburger-menu ${isMenuOpen ? "hamburger-open" : ""}`}
