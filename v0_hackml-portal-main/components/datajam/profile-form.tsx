@@ -119,7 +119,8 @@ export function ProfileForm({ initialProfile, defaultStudentEmail = "", submitLa
 
       <fieldset className="flex flex-col gap-3 rounded-lg border border-primary/25 p-5">
         <legend className="px-2 font-mono text-sm font-semibold text-primary">PHOTO CONSENT *</legend>
-        <p className="text-sm text-muted-foreground">May we photograph you at DataJam and use those photos in event recaps and promotion on our website and social media? Choosing no will not affect your participation. You can update this choice in your profile.</p>
+        <p className="text-sm text-muted-foreground">Please note that the DSSS may take photos and videos during this event for use in event recaps, promotional materials, social media, and other DSSS communications.</p>
+        <p className="text-sm text-muted-foreground">If you do not wish to be photographed or recorded, please indicate this below and notify a DSSS organizer in person at the event.</p>
         {[{ value: true, label: "Yes, I consent to event photography and these uses." }, { value: false, label: "No, I do not consent to being photographed." }].map((option) => (
           <label key={String(option.value)} className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 text-sm">
             <input type="radio" name="photo_consent" required checked={formData.photo_consent === option.value} onChange={() => setFormData({ ...formData, photo_consent: option.value })} className="mt-1 accent-primary" />
