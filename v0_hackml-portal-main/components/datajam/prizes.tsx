@@ -4,8 +4,8 @@ const cards = [
   {
     eyebrow: "// TEAM PRIZES",
     eyebrowClass: "text-teal-500",
-    title: "$400 Total Prize Budget",
-    body: "Planned prize breakdown: 4 × $50, 4 × $30, and 4 × $20.",
+    title: "$400 in Total Prize Value",
+    body: "Planned prize breakdown: first place ($50 in prize value per person), second place ($30 in prize value per person), and third place ($20 in prize value per person).",
   },
   {
     eyebrow: "// COMPETITION FORMAT",

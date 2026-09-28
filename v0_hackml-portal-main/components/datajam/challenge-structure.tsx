@@ -5,7 +5,7 @@ const steps = [
   {
     number: "01",
     title: "Case & Dataset Issued",
-    body: "Receive the business case and dataset on day one of your assigned 3–4 day working period.",
+    body: "Receive the business case and dataset on day one of your assigned 3 day working period.",
   },
   {
     number: "02",
@@ -26,7 +26,7 @@ export function ChallengeStructure() {
         <div className="flex items-end justify-between gap-6">
           <div className="flex max-w-[500px] flex-col gap-3">
             <p className="font-mono text-xs font-bold text-teal-500">CHALLENGE STRUCTURE</p>
-            <h2 className="font-display text-[32px] font-extrabold text-foreground">3–4 Day Case Sprint</h2>
+            <h2 className="font-display text-[32px] font-extrabold text-foreground">3 Day Case Sprint</h2>
           </div>
           <Image src="/datajam/triangles.svg" alt="" width={44} height={12} />
         </div>
