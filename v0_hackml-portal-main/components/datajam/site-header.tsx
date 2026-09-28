@@ -2,6 +2,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { HeaderAuthLink } from "./header-auth-link"
+import { socials } from "./socials"
 
 const links = [
   { href: "/schedule", label: "SCHEDULE" },
@@ -13,10 +14,21 @@ export function SiteHeader() {
   return (
     <header className="border-b border-border">
       <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between gap-6 px-4 sm:px-8 lg:px-20">
-        <Link href="/" className="flex items-center gap-3">
-          <Image src="/datajam/panda-logo.png" alt="" width={35} height={48} />
-          <span className="font-mono text-base font-bold whitespace-nowrap text-foreground">SFU DATA SCIENCE</span>
-        </Link>
+        <div className="flex items-center gap-5">
+          <Link href="/" className="flex items-center gap-3">
+            <Image src="/datajam/panda-logo.png" alt="" width={35} height={48} />
+            <span className="font-mono text-base font-bold whitespace-nowrap text-foreground">SFU DATA SCIENCE</span>
+          </Link>
+          <ul className="hidden items-center gap-4 sm:flex">
+            {socials.map((social) => (
+              <li key={social.label}>
+                <a href={social.href} target="_blank" rel="noopener noreferrer" aria-label={social.label} className="block transition-opacity hover:opacity-70">
+                  <Image src={social.icon} alt="" width={20} height={20} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
         <nav className="flex items-center gap-6 lg:gap-8">
           <ul className="hidden items-center gap-5 md:flex lg:gap-8">
             {links.map((link) => (

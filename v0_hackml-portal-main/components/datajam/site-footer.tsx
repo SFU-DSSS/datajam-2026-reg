@@ -1,6 +1,5 @@
 import Image from "next/image"
-
-const socials = [{ href: "https://www.instagram.com/sfudsss/", label: "Instagram", icon: "/datajam/instagram.svg" }]
+import { socials } from "./socials"
 
 export function SiteFooter() {
   return (
