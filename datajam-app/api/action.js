@@ -1,3 +1,4 @@
+import { kickDiscord } from '../lib/discord.js';
 const actions = new Set(['me', 'profile', 'create', 'join', 'rename', 'rotate', 'remove', 'transfer', 'leave']);
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -29,6 +30,7 @@ export default async function handler(req, res) {
     });
     const result = await response.json();
     if (!response.ok) return res.status(response.status === 401 ? 401 : 400).json({ error: result.code === 'P0001' ? result.message : 'Request failed. Check your session and backend setup.' });
+    if (!result.error && !['me','profile'].includes(body.action)) await kickDiscord();
     return res.status(result.error ? (result.error === 'Too many attempts. Try again in 15 minutes.' ? 429 : 400) : 200).json(result);
   } catch { return res.status(503).json({ error: 'Backend unavailable. Please try again.' }); }
 }

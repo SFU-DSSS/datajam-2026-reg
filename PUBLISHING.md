@@ -16,6 +16,8 @@ There are two applications in one Git repository and one shared database/authent
 
 Participants visit the frontend URL. The frontend forwards `/api/action` and `/api/admin` to the backend. Both applications must use the **same Supabase project**. You do not need to copy files between the folders.
 
+Team Discord adds `/api/discord` to the frontend proxy. Follow [the Discord deployment checklist](datajam-app/DISCORD_SETUP.md) for migration 005, bot installation, backend secrets, the required minute scheduler on Hobby, and a real OAuth acceptance test. Production domains are `datajam.sfudsss.com` (frontend) and `datajam-2026-reg-api.vercel.app` (backend).
+
 The backend's root page is an older plain test interface. Seeing that page at the backend URL is expected; share the frontend URL with attendees.
 
 Keep these three values in your own setup notes as you create them:
@@ -57,12 +59,13 @@ In the project's SQL Editor, create a query, paste the entire contents of each f
 2. `datajam-app/supabase/002_photo_consent.sql`
 3. `datajam-app/supabase/003_admin.sql`
 4. `datajam-app/supabase/004_organizer_tools.sql`
+5. `datajam-app/supabase/005_discord.sql` for team Discord; complete [Discord setup](datajam-app/DISCORD_SETUP.md), including the separate scheduler setup.
 
 Wait for success before continuing. These are one-time migrations; if you are returning to an existing setup, run only the unapplied files. Do not run the old SQL scripts in `v0_hackml-portal-main/scripts/`; they belong to the earlier example app.
 
 The private `registration_private` schema contains the tables. Leave it out of exposed API schemas. The application uses permission-checking functions in `public`; it does not need direct table access.
 
-Copy the project URL and **publishable key** (or legacy `anon` key) from the project's API settings. The variables named `ANON_KEY` accept that public client key. Do not use the service-role or secret key in either application's configuration.
+Copy the project URL and **publishable key** (or legacy `anon` key) from the project's API settings. The variables named `ANON_KEY` accept that public client key. Never put a service-role or secret key into these variables or the frontend. Discord integration additionally requires a separate backend-only `SUPABASE_SERVICE_ROLE_KEY`, as described in its checklist.
 
 In Authentication settings, enable email/password signup, require email confirmation, and set a minimum password length of at least eight. An unverified login cannot submit a registration or use organizer tools.
 

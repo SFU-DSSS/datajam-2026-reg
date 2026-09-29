@@ -2,6 +2,10 @@
 
 For organizer registration management and email endpoints, see [organizer setup and API](ADMIN_SETUP.md). These use `/api/admin` with the same login session and require an explicit database admin grant. The participant endpoint below remains separate.
 
+Team Discord adds bearer-authenticated `POST /api/discord` with actions `start`, `complete` (requires `state` and `code`), and `status`. The backend derives membership from the caller; it accepts no target team/user identity. `start` returns `{state,url}`; the browser retains state in sessionStorage, then navigates to Discord. `complete` requires the same authenticated app user and atomically consumes the stored state hash. `status` returns `{connected,needs_reconnect,has_team,channel_id,chat_url}`; the channel URL is provided only after current membership is synchronized. The frontend proxies this endpoint same-origin.
+
+Scheduled `GET`/`POST /api/discord-sync` requires `Authorization: Bearer <CRON_SECRET>` and processes a bounded durable batch. It is not a participant endpoint and is not proxied by Next. See [Discord setup and deployment](DISCORD_SETUP.md) for migration 005, backend secrets, required scheduling, eventual-consistency limits, and live verification.
+
 ## Authentication
 
 Use `@supabase/supabase-js` with the public project URL and publishable/anon key:
