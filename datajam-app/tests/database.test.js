@@ -8,7 +8,7 @@ const ids = Array.from({ length: 8 }, (_, i) => `00000000-0000-4000-8000-${Strin
 before(async () => {
   db = new PGlite();
   await db.exec(`
-    create role anon; create role authenticated;
+    create role anon; create role authenticated; create role service_role;
     create schema auth;
     create table auth.users (id uuid primary key, email_confirmed_at timestamptz, email text);
     create function auth.uid() returns uuid language sql as
@@ -26,9 +26,11 @@ before(async () => {
   assert.match((await call(0, 'create', { name: 'Pending consent' })).error, /photo consent/);
   await db.exec(await readFile(new URL('../supabase/003_admin.sql', import.meta.url), 'utf8'));
   await db.exec(await readFile(new URL('../supabase/004_organizer_tools.sql', import.meta.url), 'utf8'));
+  await db.exec(await readFile(new URL('../supabase/005_discord.sql', import.meta.url), 'utf8'));
 });
 after(async () => { await db?.close(); });
 beforeEach(async () => {
+  await db.exec("truncate registration_private.discord_jobs, registration_private.discord_links, registration_private.discord_states, registration_private.discord_teams; update registration_private.discord_worker set token = null, expires_at = now();");
   await db.exec('truncate registration_private.admin_events, registration_private.admins, registration_private.members, registration_private.teams, registration_private.profiles, registration_private.attempts cascade; update registration_private.settings set max_team_size = 4;');
 });
 async function call(i, action, payload = {}, admin = false) {
@@ -41,6 +43,110 @@ async function call(i, action, payload = {}, admin = false) {
   });
 }
 const adminCall = (i, action, payload) => call(i, action, payload, true);
+async function discordCall(i, action, payload = {}) {
+  return db.transaction(async tx => {
+    await tx.query("select set_config('request.jwt.claim.sub', $1, true)", [ids[i]]);
+    await tx.exec('set local role authenticated');
+    return (await tx.query('select public.discord_user($1,$2::jsonb) as result', [action,JSON.stringify(payload)])).rows[0].result;
+  });
+}
+async function discordService(action, payload = {}) {
+  return db.transaction(async tx => {
+    await tx.exec('set local role service_role');
+    return (await tx.query('select public.discord_service($1,$2::jsonb) as result', [action,JSON.stringify(payload)])).rows[0].result;
+  });
+}
+
+test('Discord state is caller-bound, expiring, one-time, and requires real membership', async () => {
+  const state_hash = 'a'.repeat(64);
+  await assert.rejects(discordCall(0,'start',{state_hash}), /Join an app team/);
+  await team(); await profile(1);
+  await discordCall(0,'start',{state_hash});
+  await assert.rejects(discordCall(1,'consume',{state_hash}), /expired/);
+  await assert.rejects(discordCall(0,'consume',{state_hash: 'b'.repeat(64)}), /expired/);
+  assert.equal((await discordCall(0,'consume',{state_hash})).user_id, ids[0]);
+  await assert.rejects(discordCall(0,'consume',{state_hash}), /expired/);
+  await discordCall(0,'start',{state_hash});
+  await db.exec("update registration_private.discord_states set expires_at = now() - interval '1 second'");
+  await assert.rejects(discordCall(0,'consume',{state_hash}), /expired/);
+  await discordCall(0,'start',{state_hash});
+  await call(0,'leave');
+  await assert.rejects(discordCall(0,'consume',{state_hash}), /Join an app team/);
+});
+
+test('Discord privileged RPC and private records are inaccessible to participants', async () => {
+  for (const role of ['anon','authenticated']) {
+    await assert.rejects(db.transaction(async tx => {
+      await tx.exec(`set local role ${role}`);
+      await tx.exec("select public.discord_service('claim','{}')");
+    }), /permission denied/);
+    for (const table of ['discord_links','discord_states','discord_teams','discord_jobs','discord_worker']) {
+      await assert.rejects(db.transaction(async tx => {
+        await tx.exec(`set local role ${role}`);
+        await tx.exec(`select * from registration_private.${table}`);
+      }), /permission denied/);
+    }
+  }
+});
+
+test('Discord identities cannot be shared or silently switched and links cannot choose a team', async () => {
+  const t = await team(); await profile(1); await call(1,'join',{code:t.invite_code});
+  await discordService('link',{user_id:ids[0],discord_id:'123456789012345678'});
+  await assert.rejects(discordService('link',{user_id:ids[1],discord_id:'123456789012345678'}), /already connected/);
+  await assert.rejects(discordService('link',{user_id:ids[0],discord_id:'123456789012345679'}), /originally connected/);
+  await assert.rejects(discordService('link',{user_id:ids[2],discord_id:'123456789012345680'}), /Join an app team/);
+  assert.equal((await discordCall(1,'status',{team_id:t.id,user_id:ids[0]})).connected,false);
+  assert.equal((await discordCall(0,'status')).channel_id,null);
+});
+
+test('Discord queue survives moves, removals and disbanding with retained resource IDs', async () => {
+  const t = await team(); await profile(1); await profile(2);
+  await call(1,'join',{code:t.invite_code});
+  await db.query('insert into registration_private.admins values($1)',[ids[7]]);
+  const b = await adminCall(7,'team_create',{name:'Beta',user_id:ids[2]});
+  await db.query('insert into registration_private.discord_teams values($1,$2,$3)',[t.id,'123456789012345678','123456789012345679']);
+  await db.exec('truncate registration_private.discord_jobs');
+  await adminCall(7,'team_assign',{team_id:b.team_id,user_id:ids[1]});
+  assert.ok((await db.query("select id from registration_private.discord_jobs where kind = 'user'")).rows.some(r => r.id === ids[1]));
+  await db.exec('truncate registration_private.discord_jobs');
+  await adminCall(7,'team_delete',{team_id:t.id});
+  const jobs = (await db.query('select kind,id from registration_private.discord_jobs')).rows;
+  assert.ok(jobs.some(r => r.kind === 'team' && r.id === t.id));
+  assert.ok(jobs.some(r => r.kind === 'user' && r.id === ids[0]));
+  assert.equal((await db.query('select role_id from registration_private.discord_teams where team_id = $1',[t.id])).rows[0].role_id,'123456789012345678');
+});
+
+test('Discord worker leases serialize processing and revision fencing preserves concurrent edits', async () => {
+  const t = await team();
+  const token = ids[6];
+  const job = await discordService('claim',{token});
+  assert.ok(job.id);
+  assert.equal((await discordService('claim',{token:ids[5]})).busy,true);
+  await assert.rejects(discordService('context',{token:ids[5],kind:'team',team_id:t.id}), /lease expired/);
+  await call(0,'rename',{name:'Changed while syncing'});
+  await discordService('finish',{token,kind:job.kind,id:job.id,revision:job.revision});
+  assert.equal((await db.query("select revision from registration_private.discord_jobs where kind = 'team' and id = $1",[t.id])).rows.length,1);
+  const retry = await discordService('claim',{token});
+  await discordService('finish',{token,kind:retry.kind,id:retry.id,revision:retry.revision,error:'Discord API returned 429.',retry_after:90});
+  const row = (await db.query('select attempts, available_at > now() + interval \'80 seconds\' as delayed from registration_private.discord_jobs where kind = $1 and id = $2',[retry.kind,retry.id])).rows[0];
+  assert.equal(row.attempts,1); assert.equal(row.delayed,true);
+});
+
+test('Discord crashed lease expires and chat URLs stay hidden until current membership is synced', async () => {
+  const t = await team();
+  await discordService('link',{user_id:ids[0],discord_id:'123456789012345678'});
+  const token = ids[6];
+  await discordService('claim',{token});
+  await discordService('save_team',{token,team_id:t.id,role_id:'123456789012345679',channel_id:'123456789012345680'});
+  await discordService('save_user',{token,user_id:ids[0],team_id:t.id,needs_reconnect:false});
+  assert.equal((await discordCall(0,'status')).channel_id,null); // pending job
+  await db.exec('truncate registration_private.discord_jobs');
+  assert.equal((await discordCall(0,'status')).channel_id,'123456789012345680');
+  await call(0,'leave');
+  assert.equal((await discordCall(0,'status')).channel_id,null);
+  await db.exec("update registration_private.discord_worker set expires_at = now() - interval '1 second'");
+  assert.ok((await discordService('claim',{token:ids[5]})).id);
+});
 test('admin access is database-controlled and private tables cannot be changed by participants', async () => {
   assert.equal((await adminCall(0, 'access')).is_admin, false);
   for (const action of ['list','decision','compose','claim','finish','accept_all','team_create','team_assign','team_remove','team_delete','team_transfer','team_rename','team_rotate']) await assert.rejects(adminCall(0, action), /Organizer access/);

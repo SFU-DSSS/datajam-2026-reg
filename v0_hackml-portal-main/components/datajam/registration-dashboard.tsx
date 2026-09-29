@@ -1,4 +1,5 @@
 "use client"
+import { TeamDiscord } from "@/components/datajam/team-discord"
 
 import type React from "react"
 import { useEffect, useState } from "react"
@@ -228,6 +229,8 @@ function TeamPortal({
           [ {team.members.length} / {state.max_team_size} MEMBERS ]
         </p>
       </div>
+
+      <TeamDiscord key={team.id} teamId={team.id} />
 
       <div className="grid gap-6 md:grid-cols-2">
         <CopyField
