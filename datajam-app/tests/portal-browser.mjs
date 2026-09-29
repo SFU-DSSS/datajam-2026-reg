@@ -1,4 +1,4 @@
-// Real Next frontend + registration API handlers + SQL. Auth, Discord HTTP and email delivery are fixtures.
+// Real Next frontend + API handlers + SQL. Only Supabase Auth and email delivery are fixtures.
 // Run with Node 22 after installing both folders. Uses installed Google Chrome.
 import assert from 'node:assert/strict';
 import http from 'node:http';
@@ -87,8 +87,6 @@ try {
   next.stdout.on('data', chunk => log += chunk); next.stderr.on('data', chunk => log += chunk);
   for (let attempt=0;attempt<90;attempt++) { if (/Ready in/.test(log)) break; if (next.exitCode !== null) throw new Error(log); await new Promise(resolve => setTimeout(resolve,1000)); }
   if (!/Ready in/.test(log)) throw new Error(log);
-  // Compile callback before OAuth navigation so dev Fast Refresh cannot interrupt the one-time exchange.
-  await fetch(`${origin}/discord/callback`);
   browser = await chromium.launch(process.env.CHROME_PATH ? { executablePath:process.env.CHROME_PATH, headless:true } : { channel:'chrome', headless:true });
   const page = await browser.newPage(); page.setDefaultTimeout(30000); page.on('pageerror',e => errors.push(e.message));
   await login(page,0);
@@ -125,34 +123,7 @@ try {
   await page.screenshot({ path:'/tmp/datajam-organizer-desktop.png',fullPage:true });
 
   const participant = await browser.newPage(); participant.setDefaultTimeout(30000); participant.on('pageerror',e => errors.push(e.message));
-  let discordConnected = false, discordCompletes = 0;
-  const discordRequests = [];
-  participant.on('request', r => { if (r.url().includes('discord')) discordRequests.push({ url:r.url(),method:r.method(),data:r.postData() }); });
-  const discordState = 'a'.repeat(64);
-  await participant.route('**/api/discord', async route => {
-    const request = route.request();
-    assert.match(request.headers().authorization,/^Bearer /);
-    const body = request.postDataJSON();
-    discordRequests.push(body);
-    if (body.action === 'start') return route.fulfill({json:{state:discordState,url:`https://discord.com/oauth2/authorize?state=${discordState}`}});
-    if (body.action === 'complete') {
-      assert.equal(body.state,discordState); assert.equal(body.code,'fixture-code');
-      discordCompletes++; discordConnected = true;
-    }
-    return route.fulfill({json:{connected:discordConnected,has_team:true,needs_reconnect:false,chat_url:discordConnected ? 'https://discord.com/channels/444444444444444444/222222222222222222' : null}});
-  });
-  await participant.route('https://discord.com/oauth2/authorize?*', route => route.fulfill({status:302,headers:{location:`${origin}/discord/callback?state=${discordState}&code=fixture-code`}}));
   await login(participant,1);
-  await participant.getByRole('button',{name:'Join team Discord',exact:true}).click();
-  try { await participant.getByRole('link',{name:'Open team chat',exact:true}).waitFor(); }
-  catch { throw new Error(`Discord callback UI failed (url=${participant.url()}, completions=${discordCompletes}, requests=${JSON.stringify(discordRequests)}, errors=${JSON.stringify(errors)}): ${await participant.locator('body').innerText()}`); }
-  assert.equal(discordCompletes,1);
-  assert.equal(await participant.evaluate(() => sessionStorage.getItem('datajam-discord-state')),null);
-  await participant.goto(`${origin}/discord/callback?state=${discordState}&code=forwarded-code`);
-  await participant.getByText(/Authorization did not match this browser/).waitFor();
-  assert.equal(discordCompletes,1);
-  assert.equal(new URL(participant.url()).search,'');
-  await participant.goto(`${origin}/dashboard`);
   assert.equal(await participant.getByRole('link',{ name:'ORGANIZER DASHBOARD',exact:true }).count(),0);
   await participant.goto(`${origin}/dashboard/organizer`);
   await participant.getByRole('alert').filter({ hasText: 'Organizer access required.' }).waitFor();
@@ -184,6 +155,6 @@ try {
   await participant.getByText(/If an account matches that email/).waitFor();
   assert.equal(recoveryRequests,1);
   assert.deepEqual(errors,[]);
-  console.log('Portal Chrome test passed: Discord connect/callback/chat link and forwarded-callback rejection; organizer access, filters, accept all, email preview/queue, team rename/captain/assignment, photo consent, password forms, and mobile layout. Auth, Discord HTTP and delivery were fixtures; registration API handlers and SQL were real.');
+  console.log('Portal Chrome test passed: organizer access, filters, accept all, email preview/queue, team rename/captain/assignment, photo consent, password forms, and mobile layout. Auth and delivery were fixtures; API handlers and SQL were real.');
 } catch (error) { console.error(log.slice(-6000)); throw error; }
 finally { await browser?.close(); next?.kill(); provider?.close(); await db.close(); }

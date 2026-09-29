@@ -1,5 +1,4 @@
 import { sendEmail } from '../lib/email.js';
-import { kickDiscord } from '../lib/discord.js';
 const actions = new Set(['access', 'list', 'decision', 'compose', 'send', 'accept_all', 'team_create', 'team_rename', 'team_rotate', 'team_assign', 'team_remove', 'team_transfer', 'team_delete']);
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -46,7 +45,6 @@ export default async function handler(req, res) {
         } else result.email_notice = 'Email already processed or sending. Check email history.';
       }
     }
-    if (body.action.startsWith('team_')) await kickDiscord();
     return res.status(200).json(result);
   } catch (error) {
     return res.status(error.message === 'Organizer access required.' ? 403 : 400).json({ error: error.message });

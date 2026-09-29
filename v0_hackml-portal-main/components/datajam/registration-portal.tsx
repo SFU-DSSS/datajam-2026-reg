@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card"
 import { InviteNotice } from "@/components/datajam/invite-notice"
 import { PortalProfileForm } from "@/components/datajam/portal-profile-form"
 import { StatusLine } from "@/components/datajam/status-line"
-import { TeamDiscord } from "@/components/datajam/team-discord"
 import type { RegistrationLookup } from "@/lib/datajam/server"
 
 const overlayCode = `import pandas as pd
@@ -65,7 +64,6 @@ function PortalContent({ registration }: { registration: RegistrationLookup }) {
       <Button asChild className={ctaClass}>
         <Link href="/dashboard">{state.team ? "OPEN DASHBOARD" : "CHOOSE A TEAM"}</Link>
       </Button>
-      {state.team && <TeamDiscord teamId={state.team.id} />}
     </div>
   )
 }

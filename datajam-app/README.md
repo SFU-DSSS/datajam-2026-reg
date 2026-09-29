@@ -12,7 +12,7 @@ Self-contained backend and plain HTML/CSS/JavaScript test frontend. Deploy this 
 - Captain can rename, remove members, regenerate invitations, and transfer captaincy.
 - Removing a member regenerates the code/link. Members can still share the new invitation; removal is not a permanent ban.
 - Captain must transfer before leaving a populated team. Last member leaving deletes the team.
-- Participant and organizer actions use caller tokens; profile privacy and team rules are enforced in PostgreSQL. Optional team Discord uses a backend-only service-role key for its trusted synchronization RPC; see [Discord setup](DISCORD_SETUP.md).
+- No service-role/admin key in the app. Profile privacy and all team rules are enforced in PostgreSQL, not just the interface.
 - Organizer dashboard: search registrations and teams, manage admission status, automatically send acceptance emails, and preview/send custom participant emails through Brevo. See [organizer setup](ADMIN_SETUP.md).
 
 ## 1. Set up Supabase
