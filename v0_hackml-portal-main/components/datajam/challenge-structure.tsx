@@ -21,7 +21,7 @@ const steps = [
 
 export function ChallengeStructure() {
   return (
-    <section id="schedule" className="scroll-mt-4 border-t border-border">
+    <section id="schedule" className="scroll-mt-24 border-t border-border">
       <div className="mx-auto flex max-w-[1440px] flex-col gap-14 px-4 py-16 sm:px-8 lg:px-20 lg:py-[100px]">
         <div className="flex items-end justify-between gap-6">
           <div className="flex max-w-[500px] flex-col gap-3">

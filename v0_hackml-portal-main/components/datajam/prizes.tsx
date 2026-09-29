@@ -17,7 +17,7 @@ const cards = [
 
 export function Prizes() {
   return (
-    <section id="prizes" className="scroll-mt-4 border-y border-primary/25 bg-muted">
+    <section id="prizes" className="scroll-mt-24 border-y border-primary/25 bg-muted">
       <div className="mx-auto flex max-w-[1440px] flex-col gap-14 px-4 py-16 sm:px-8 lg:px-20 lg:py-[100px]">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h2 className="flex flex-wrap items-center gap-x-4 font-display text-2xl font-extrabold sm:text-[28px]">

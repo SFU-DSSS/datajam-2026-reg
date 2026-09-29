@@ -18,7 +18,7 @@ export function Hero() {
   return (
     <section
       id="about"
-      className="mx-auto flex max-w-[1440px] scroll-mt-4 flex-col items-center gap-16 px-4 py-16 sm:px-8 lg:flex-row lg:px-20 lg:py-[100px]"
+      className="mx-auto flex max-w-[1440px] scroll-mt-24 flex-col items-center gap-16 px-4 py-16 sm:px-8 lg:flex-row lg:px-20 lg:py-[100px]"
     >
       <div className="flex w-full min-w-0 flex-1 flex-col gap-10">
         <div className="flex flex-col gap-4">
@@ -31,7 +31,7 @@ export function Hero() {
           </div>
           <h1 className="flex flex-col gap-1 font-display text-6xl leading-none font-black text-shadow-[0_0_20px_rgba(0,240,255,0.5)] sm:text-[80px]">
             <span className="text-foreground">DATA</span>
-            <span className="text-primary">JAM_</span>
+            <span className="text-primary">JAM</span>
           </h1>
         </div>
 

@@ -70,7 +70,7 @@ function PortalContent({ registration }: { registration: RegistrationLookup }) {
 
 export function RegistrationPortal({ registration }: { registration: RegistrationLookup }) {
   return (
-    <section id="register" className="flex scroll-mt-4 justify-center px-4 pb-[120px] sm:px-8 lg:px-20">
+    <section id="register" className="flex scroll-mt-24 justify-center px-4 pb-[120px] sm:px-8 lg:px-20">
       <Card className="relative w-full max-w-[800px] gap-9 overflow-hidden rounded-2xl border-primary/25 p-6 shadow-[0_12px_48px_rgba(0,240,255,0.05)] sm:p-12">
         <pre
           aria-hidden

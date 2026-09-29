@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/datajam/site-footer"
 
 export function PageShell({ children }: { children: React.ReactNode }) {
   return (
-    <div id="top" className="relative min-h-screen overflow-hidden bg-background font-sans text-base leading-normal text-foreground">
+    <div id="top" className="relative min-h-screen overflow-clip bg-background font-sans text-base leading-normal text-foreground">
       {/* Background glows */}
       <Image
         src="/datajam/glow-left.svg"
