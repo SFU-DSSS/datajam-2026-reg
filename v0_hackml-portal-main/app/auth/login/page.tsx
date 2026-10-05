@@ -27,10 +27,7 @@ export default function LoginPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.has("verified")) setNotice("Email verified. Sign in to continue.")
-    else if (params.has("expired"))
-      setError(
-        "That confirmation link expired or was already used. Try signing in; if your email is not confirmed yet, create your account again to get a new link.",
-      )
+    else if (params.has("expired")) setNotice("Link has expired but your account may have been verified. Try signing in to continue, and if that doesn't work, try creating a new account with the same email for a new link.")
   }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
