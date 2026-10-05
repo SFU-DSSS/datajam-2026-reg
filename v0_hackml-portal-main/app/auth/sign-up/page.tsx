@@ -48,7 +48,7 @@ export default function SignUpPage() {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -57,6 +57,11 @@ export default function SignUpPage() {
         },
       })
       if (error) throw error
+      // Supabase reports success without sending an email when a confirmed account already uses this address.
+      if (data.user?.identities?.length === 0) {
+        setError("An account with this email already exists. Sign in instead, or reset your password if you forgot it.")
+        return
+      }
       // A session exists only after the login email is verified.
       router.push("/auth/verify-email")
     } catch (error: unknown) {

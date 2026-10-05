@@ -36,5 +36,16 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Signed-in users have no reason to see the sign-in or sign-up forms
+  if (user && ["/auth/login", "/auth/sign-up"].includes(request.nextUrl.pathname)) {
+    const url = request.nextUrl.clone()
+    url.pathname = "/dashboard"
+    url.search = ""
+    const redirect = NextResponse.redirect(url)
+    // Keep any refreshed session cookies
+    supabaseResponse.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie))
+    return redirect
+  }
+
   return supabaseResponse
 }

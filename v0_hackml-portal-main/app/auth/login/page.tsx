@@ -11,16 +11,27 @@ import { Card } from "@/components/ui/card"
 import { Turnstile, TURNSTILE_SITE_KEY } from "@/components/turnstile"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [captchaToken, setCaptchaToken] = useState("")
   const [captchaResetKey, setCaptchaResetKey] = useState(0)
   const router = useRouter()
+
+  // Set by /auth/callback when a confirmation link could not sign the user in.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.has("verified")) setNotice("Email verified. Sign in to continue.")
+    else if (params.has("expired"))
+      setError(
+        "That confirmation link expired or was already used. Try signing in; if your email is not confirmed yet, create your account again to get a new link.",
+      )
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -82,7 +93,7 @@ export default function LoginPage() {
               />
             </div>
             <Turnstile onToken={setCaptchaToken} onError={setError} resetKey={captchaResetKey} />
-            <StatusLine status={error ? { kind: "error", text: error } : null} />
+            <StatusLine status={error ? { kind: "error", text: error } : notice ? { kind: "ok", text: notice } : null} />
             <Button type="submit" className="h-12 font-mono text-xs" disabled={isLoading}>
               {isLoading ? "SIGNING IN…" : "SIGN IN"}
             </Button>
