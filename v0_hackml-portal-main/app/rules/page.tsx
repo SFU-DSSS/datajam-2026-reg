@@ -3,11 +3,11 @@ import { InfoPage } from "@/components/datajam/info-page"
 const rules = [
   {
     title: "Team Formation",
-    body: "Teams may have up to four members. All team members must be registered participants. DSSS will match incomplete teams October 18–21.",
+    body: "Teams may have up to four members. All team members must be registered participants. DSSS will match incomplete teams October 25–28.",
   },
   {
     title: "Competition Duration",
-    body: "Teams work during an assigned 3–4 day period between October 25 and November 7, 2026, then present on November 15 at the SUB Ballroom, SFU.",
+    body: "Teams work during an assigned 3–4 day period between November 1 and November 14, 2026, then present on November 15 at the SUB Ballroom, SFU.",
   },
   {
     title: "Case & Dataset",

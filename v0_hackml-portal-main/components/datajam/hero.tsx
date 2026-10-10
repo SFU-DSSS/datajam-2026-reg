@@ -7,7 +7,7 @@ const terminalLines = [
   "import sfu_data_jam as dj",
   "",
   "jam = dj.DataJam(year=2026)",
-  'jam.set_date("2026-11-08")',
+  'jam.set_date("2026-11-15")',
   'jam.set_location("SUB Ballroom")',
   "jam.set_team_size(max_members=4)",
   "jam.set_format(cohorts=4, judges_per_cohort=3)",
@@ -37,7 +37,7 @@ export function Hero() {
 
         <dl className="flex flex-wrap gap-x-10 gap-y-4">
           {[
-            { label: "DATE", value: "NOV 8TH" },
+            { label: "DATE", value: "NOV 15TH" },
             { label: "VENUE", value: "SUB BALLROOM · SFU" },
           ].map((item) => (
             <div key={item.label} className="flex flex-col gap-1 border-l-2 border-primary pl-4">
