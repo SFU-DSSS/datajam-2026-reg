@@ -47,7 +47,7 @@ export function SiteHeader() {
             className="hidden gap-2 rounded-full border-primary bg-primary/8 px-3 py-1.5 font-mono text-xs font-semibold text-primary uppercase sm:inline-flex md:hidden lg:inline-flex"
           >
             <Image src="/datajam/status-dot.svg" alt="" width={8} height={8} />
-            Sign-ups Due Oct 17
+            Sign-ups Due Oct 24
           </Badge>
           <HeaderAuthLink />
         </nav>

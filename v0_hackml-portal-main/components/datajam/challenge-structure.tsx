@@ -14,7 +14,7 @@ const steps = [
   },
   {
     number: "03",
-    title: "Present on Nov 8",
+    title: "Present on Nov 15",
     body: "Preliminary round: 7-minute presentation + 3-minute Q&A. Final round: 10-minute presentation + 5-minute Q&A.",
   },
 ]

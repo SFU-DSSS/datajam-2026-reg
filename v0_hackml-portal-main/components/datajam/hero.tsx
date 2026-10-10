@@ -11,7 +11,7 @@ const terminalLines = [
   'jam.set_location("SUB Ballroom")',
   "jam.set_team_size(max_members=4)",
   "jam.set_format(cohorts=4, judges_per_cohort=3)",
-  "[SYSTEM] Sign-ups close Oct 17...",
+  "[SYSTEM] Sign-ups close Oct 24...",
 ]
 
 export function Hero() {

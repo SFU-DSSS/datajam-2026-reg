@@ -7,7 +7,7 @@ const rules = [
   },
   {
     title: "Competition Duration",
-    body: "Teams work during an assigned 3–4 day period between October 25 and November 7, 2026, then present on November 8 at the SUB Ballroom, SFU.",
+    body: "Teams work during an assigned 3–4 day period between October 25 and November 7, 2026, then present on November 15 at the SUB Ballroom, SFU.",
   },
   {
     title: "Case & Dataset",
