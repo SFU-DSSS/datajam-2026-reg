@@ -10,12 +10,12 @@ const faqs = [
   {
     question: "What is the team size rule?",
     answer:
-      "Teams may have up to four members. If your team is not full, DSSS will organize team matching after registration closes.",
+      "Teams may have up to four members. If your team is not full, We will organize team matching after registration closes.",
   },
   {
     question: "What is the competition timeline?",
     answer:
-      "Each team selects their own working period of three days within November 1 - November 14. The case and dataset are issued on day one. DataJam presentations are in-person on November 15th.",
+      "Each team selects their own working period of three days within November 1-14. The case and dataset are issued on day one. DataJam presentations are in-person on November 15.",
   },
 ]
 
