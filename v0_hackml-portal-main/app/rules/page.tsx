@@ -3,7 +3,7 @@ import { InfoPage } from "@/components/datajam/info-page"
 const rules = [
   {
     title: "Team Formation",
-    body: "Teams may have up to four members. All team members must be registered participants. We will match incomplete teams October 25–28.",
+    body: "Teams may have up to four members. All team members must be registered participants.",
   },
   {
     title: "Competition Duration",

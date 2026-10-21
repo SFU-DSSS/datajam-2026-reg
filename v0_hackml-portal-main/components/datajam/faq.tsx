@@ -5,7 +5,7 @@ const faqs = [
   {
     question: "When are sign-ups due?",
     answer:
-      "Sign-ups close October 24. We will match incomplete teams October 25–28; teams then select a 3 day working period by October 31.",
+      "Sign-ups close October 28. Teams select a 3 day working period by October 31.",
   },
   {
     question: "What is the team size rule?",
