@@ -5,17 +5,17 @@ const faqs = [
   {
     question: "When are sign-ups due?",
     answer:
-      "Sign-ups close October 28. Teams select a 3 day working period by October 31.",
+      "Sign-ups close November 4.",
   },
   {
     question: "What is the team size rule?",
     answer:
-      "Teams may have up to four members. If your team is not full, We will organize team matching after registration closes.",
+      "Teams may have up to four members. If your team is not full, We will organize team matching after registration closes if needed.",
   },
   {
     question: "What is the competition timeline?",
     answer:
-      "Each team selects their own working period of three days within November 1-14. The case and dataset are issued on day one. DataJam presentations are in-person on November 15.",
+      "Each team will get a week to work on the case from November 8-14. DataJam presentations are in-person on November 15.",
   },
 ]
 
