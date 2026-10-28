@@ -2,7 +2,7 @@ import { InfoPage } from "@/components/datajam/info-page"
 
 const schedule = [
   { title: "November 4 — Registration Closes", body: "Complete your DataJam 2026 registration." },
-  { title: "By November 7 — Working Period Selection", body: "Teams select a 3 day working period." },
+  { title: "November 4-7 — Team Formation", body: "Form your team and finalize your group members." },
   {
     title: "November 8–14 — Case Working Periods",
     body: "Receive the business case and dataset on November 8. Presentation slides are due on November 14.",
