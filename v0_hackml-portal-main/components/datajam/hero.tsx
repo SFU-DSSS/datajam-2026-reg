@@ -11,7 +11,7 @@ const terminalLines = [
   'jam.set_location("SUB Ballroom")',
   "jam.set_team_size(max_members=4)",
   "jam.set_format(cohorts=4, judges_per_cohort=3)",
-  "[SYSTEM] Sign-ups close Oct 24...",
+  "[SYSTEM] Sign-ups close Nov 4...",
 ]
 
 export function Hero() {
@@ -52,7 +52,7 @@ export function Hero() {
             DataJam is SFU&apos;s annual data science case competition. Work with real-world data, develop
             recommendations, and present to a 12-judge panel.
           </p>
-          <p className="font-mono text-sm text-teal-500">{">>> 3 DAYS OF FOCUSED DATA ANALYSIS"}</p>
+          <p className="font-mono text-sm text-teal-500">{">>> 1 WEEK OF FOCUSED DATA ANALYSIS"}</p>
         </div>
       </div>
 

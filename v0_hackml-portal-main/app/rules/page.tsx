@@ -3,15 +3,15 @@ import { InfoPage } from "@/components/datajam/info-page"
 const rules = [
   {
     title: "Team Formation",
-    body: "Teams may have up to four members. All team members must be registered participants. We will match incomplete teams October 25–28.",
+    body: "Teams may have up to four members. All team members must be registered participants.",
   },
   {
     title: "Competition Duration",
-    body: "Teams work during an assigned 3 day period between November 1 and November 14, 2026, then present on November 15 at the SUB Ballroom, SFU.",
+    body: "Teams work during the period between November 8 and November 14, 2026, then present on November 15 at the SUB Ballroom, SFU.",
   },
   {
     title: "Case & Dataset",
-    body: "The business case and dataset are issued on day one of your working period. Open-source external data may be used alongside the provided dataset.",
+    body: "The business case and dataset are issued on November 8. Open-source external data may be used alongside the provided dataset.",
   },
   {
     title: "Code of Conduct",
@@ -19,7 +19,7 @@ const rules = [
   },
   {
     title: "Submission & Presentations",
-    body: "Presentation slides are due on the final day of your working period. The preliminary round includes a 7-minute presentation and 3-minute Q&A; the final round includes a 10-minute presentation and 5-minute Q&A.",
+    body: "Presentation slides are due on November 14. The preliminary round includes a 7-minute presentation and 3-minute Q&A; the final round includes a 10-minute presentation and 5-minute Q&A.",
   },
   {
     title: "Competition Format & Prizes",

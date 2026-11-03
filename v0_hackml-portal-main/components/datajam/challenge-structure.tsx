@@ -5,7 +5,7 @@ const steps = [
   {
     number: "01",
     title: "Case & Dataset Issued",
-    body: "Receive the business case and dataset on day one of your assigned 3 day working period.",
+    body: "Receive the business case and dataset on November 8.",
   },
   {
     number: "02",
