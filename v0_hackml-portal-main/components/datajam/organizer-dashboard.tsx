@@ -36,6 +36,7 @@ export function OrganizerDashboard({ initialState }: { initialState: OrganizerSt
   async function refresh() {
     const next = await organizerAction<OrganizerState>("list")
     setState(next)
+    setDraft((old) => old?.recipients.some((recipient) => !next.registrations.some((r) => r.id === recipient.user_id)) ? null : old)
     setSelected((old) => new Set([...old].filter((id) => next.registrations.some((r) => r.id === id))))
   }
   async function run(work: () => Promise<void>) {
@@ -92,7 +93,7 @@ export function OrganizerDashboard({ initialState }: { initialState: OrganizerSt
       <div className="grid gap-3 sm:grid-cols-[1fr_auto]"><TerminalInput aria-label="Search applications" placeholder="Search name, email, institution, team…" value={query} onChange={(e) => setQuery(e.target.value)} /><select aria-label="Filter applications by status" className={control} value={filter} onChange={(e) => setFilter(e.target.value as AdmissionStatus | "all")}><option value="all">All applications</option>{admissionStatuses.map((s) => <option key={s} value={s}>{s}</option>)}</select></div>
       <div className="flex flex-wrap items-center gap-3"><span className="font-mono text-xs text-muted-foreground">{visible.length} shown · {selected.size} selected across filters</span><Button variant="outline" className={button} disabled={busy || !visible.length} onClick={() => changeSelection(new Set([...selected, ...visible.map((r) => r.id)]))}>SELECT SHOWN</Button><Button variant="outline" className={button} disabled={busy || !selected.size} onClick={() => changeSelection(new Set())}>CLEAR SELECTION</Button><Button className={button} disabled={busy || !selected.size} onClick={() => setTab("email")}>EMAIL SELECTED</Button></div>
       {!visible.length && <Empty text="No applications match this filter." />}
-      {visible.map((r) => <ApplicationCard key={r.id} application={r} selected={selected.has(r.id)} busy={busy} onSelect={(checked) => { const next = new Set(selected); checked ? next.add(r.id) : next.delete(r.id); changeSelection(next) }} onDecision={(status) => confirmAction(`Set ${r.name} to ${status}?`, status === "accepted" ? "An acceptance email will be sent to their login address once. If email is not configured, it stays queued." : "This updates their dashboard status. It does not send an email or change team membership; use Email for a personal message.", "decision", { user_id: r.id, status })} />)}
+      {visible.map((r) => <ApplicationCard key={r.id} application={r} selected={selected.has(r.id)} busy={busy} onSelect={(checked) => { const next = new Set(selected); checked ? next.add(r.id) : next.delete(r.id); changeSelection(next) }} onDelete={() => confirmAction(`Delete ${r.name}’s registration?`, "Their registration, admission decision, and associated emails will be deleted. They leave their team; captaincy passes to the longest-standing teammate, or an empty team is deleted. Their login account stays available to register again.", "registration_delete", { user_id: r.id })} onDecision={(status) => confirmAction(`Set ${r.name} to ${status}?`, status === "accepted" ? "An acceptance email will be sent to their login address once. If email is not configured, it stays queued." : "This updates their dashboard status. It does not send an email or change team membership; use Email for a personal message.", "decision", { user_id: r.id, status })} />)}
     </Card>}
 
     {tab === "teams" && <div className="space-y-5">
@@ -146,13 +147,13 @@ export function OrganizerDashboard({ initialState }: { initialState: OrganizerSt
 
 function Empty({ text }: { text: string }) { return <p className="rounded-lg border border-dashed border-border p-8 text-center font-mono text-sm text-muted-foreground">{text}</p> }
 
-function ApplicationCard({ application: r, selected, busy, onSelect, onDecision }: { application: Application; selected: boolean; busy: boolean; onSelect: (checked: boolean) => void; onDecision: (status: AdmissionStatus) => void }) {
+function ApplicationCard({ application: r, selected, busy, onSelect, onDecision, onDelete }: { application: Application; selected: boolean; busy: boolean; onSelect: (checked: boolean) => void; onDecision: (status: AdmissionStatus) => void; onDelete: () => void }) {
   const [decision, setDecision] = useState(r.status)
   useEffect(() => setDecision(r.status), [r.status])
   return <article className="space-y-4 rounded-xl border border-border bg-background p-5">
     <div className="flex flex-wrap justify-between gap-3"><label className="flex items-center gap-3 font-display text-sm"><input aria-label={`Select ${r.name}`} type="checkbox" className="size-4 accent-primary" checked={selected} disabled={busy} onChange={(e) => onSelect(e.target.checked)} />{r.name}</label><span className="font-mono text-xs uppercase text-primary">{r.status}</span></div>
     <dl className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">{[["Login email", r.login_email], ["Student email", r.student_email], ["Institution", r.institution], ["Student number", r.student_number], ["Discord", r.discord_username], ["Team", r.team_name || "No team"], ["Photo consent", r.photo_consent === null ? "Not answered" : r.photo_consent ? "Yes" : "No — do not photograph"]].map(([label, value]) => <div key={label}><dt className="font-mono text-[11px] uppercase text-muted-foreground">{label}</dt><dd className="mt-1 break-words">{value}</dd></div>)}</dl>
-    <div className="flex flex-wrap gap-3"><select key={r.status} defaultValue={r.status} aria-label={`Decision for ${r.name}`} className={control} disabled={busy} onChange={(e) => setDecision(e.target.value as AdmissionStatus)}>{admissionStatuses.map((s) => <option key={s}>{s}</option>)}</select><Button variant="outline" className={button} disabled={busy} onClick={() => onDecision(decision)}>SAVE STATUS</Button></div>
+    <div className="flex flex-wrap gap-3"><select key={r.status} defaultValue={r.status} aria-label={`Decision for ${r.name}`} className={control} disabled={busy} onChange={(e) => setDecision(e.target.value as AdmissionStatus)}>{admissionStatuses.map((s) => <option key={s}>{s}</option>)}</select><Button variant="outline" className={button} disabled={busy} onClick={() => onDecision(decision)}>SAVE STATUS</Button><Button variant="outline" className={`${button} text-rose-400`} disabled={busy} onClick={onDelete}>DELETE REGISTRATION</Button></div>
   </article>
 }
 

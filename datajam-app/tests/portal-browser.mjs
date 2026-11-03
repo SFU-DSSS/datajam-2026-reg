@@ -33,9 +33,9 @@ async function profile(i) {
 }
 async function login(page, i) {
   await page.goto(`${origin}/auth/login`);
-  await page.getByLabel('Email', { exact: true }).fill(emailFor(i));
-  await page.getByLabel('Password', { exact: true }).fill('fixture-password');
-  await page.getByRole('button', { name: 'Sign In', exact: true }).click();
+  await page.locator('#email').fill(emailFor(i));
+  await page.locator('#password').fill('fixture-password');
+  await page.getByRole('button', { name: 'SIGN IN', exact: true }).click();
   try { await page.waitForURL('**/dashboard') } catch { throw new Error(`Login failed: ${await page.locator('body').innerText()}`) }
   await page.getByRole('heading', { name: 'Your Registration_' }).waitFor();
 }
@@ -46,7 +46,7 @@ try {
     create table auth.users(id uuid primary key,email_confirmed_at timestamptz,email text);
     create function auth.uid() returns uuid language sql as 'select nullif(current_setting(''request.jwt.claim.sub'',true),'''')::uuid';
     grant usage on schema public,auth to authenticated,anon;`);
-  for (const file of ['001_registration.sql','002_photo_consent.sql','003_admin.sql','004_organizer_tools.sql']) await db.exec(await readFile(new URL(`../supabase/${file}`, import.meta.url),'utf8'));
+  for (const file of ['001_registration.sql','002_photo_consent.sql','003_admin.sql','004_organizer_tools.sql','005_withdrawal_student_number.sql']) await db.exec(await readFile(new URL(`../supabase/${file}`, import.meta.url),'utf8'));
   for (let i=0;i<ids.length;i++) await db.query('insert into auth.users values($1,now(),$2)', [ids[i],emailFor(i)]);
   await db.query('insert into registration_private.admins values($1)', [ids[0]]);
   for (let i=1;i<ids.length;i++) await profile(i);
@@ -154,7 +154,28 @@ try {
   await participant.getByRole('button',{ name:'SEND RESET LINK',exact:true }).click();
   await participant.getByText(/If an account matches that email/).waitFor();
   assert.equal(recoveryRequests,1);
+  await participant.goto(`${origin}/dashboard`);
+  await participant.getByRole('button', { name: 'WITHDRAW REGISTRATION', exact: true }).click();
+  await participant.getByRole('alertdialog').getByRole('button', { name: 'WITHDRAW REGISTRATION', exact: true }).click();
+  await participant.getByRole('status').filter({ hasText: 'Your registration has been withdrawn.' }).waitFor();
+  assert.equal((await rpc(1,'registration_action',{ action:'me' })).profile,null);
+  await participant.locator('#name').fill('Duplicate applicant');
+  await participant.locator('#institution').fill('SFU');
+  await participant.locator('#student_number').fill('2');
+  await participant.locator('#student_email').fill('duplicate@school.example');
+  await participant.locator('#discord_username').fill('duplicate');
+  await participant.getByRole('radio',{ name:'No, I do not consent to being photographed.' }).check();
+  await participant.getByRole('button',{ name:'SUBMIT REGISTRATION',exact:true }).click();
+  await participant.getByText(/This student number is already registered/).waitFor();
+  assert.equal((await rpc(1,'registration_action',{ action:'me' })).profile,null);
+  await page.goto(`${origin}/dashboard/organizer`);
+  const captainCard = page.locator('article').filter({ hasText: 'Student 2' });
+  await captainCard.getByRole('button',{ name:'DELETE REGISTRATION',exact:true }).click();
+  await confirm(page); await settled(page);
+  assert.equal((await rpc(2,'registration_action',{ action:'me' })).profile,null);
+  assert.equal((await rpc(3,'registration_action',{ action:'me' })).team.captain_id,ids[3]);
+  assert.equal(await page.locator('article').filter({ hasText: 'Student 2' }).count(),0);
   assert.deepEqual(errors,[]);
-  console.log('Portal Chrome test passed: organizer access, filters, accept all, email preview/queue, team rename/captain/assignment, photo consent, password forms, and mobile layout. Auth and delivery were fixtures; API handlers and SQL were real.');
+  console.log('Portal Chrome test passed: withdrawal, organizer deletion, duplicate student numbers, captain handoff, organizer access, email, teams, profile, passwords, and mobile layout. Auth and delivery were fixtures; API handlers and SQL were real.');
 } catch (error) { console.error(log.slice(-6000)); throw error; }
 finally { await browser?.close(); next?.kill(); provider?.close(); await db.close(); }

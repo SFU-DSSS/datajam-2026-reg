@@ -57,6 +57,9 @@ In the project's SQL Editor, create a query, paste the entire contents of each f
 2. `datajam-app/supabase/002_photo_consent.sql`
 3. `datajam-app/supabase/003_admin.sql`
 4. `datajam-app/supabase/004_organizer_tools.sql`
+5. `datajam-app/supabase/005_withdrawal_student_number.sql`
+
+Migration 005 adds withdrawal, organizer registration deletion, and unique student numbers (case-insensitive, ignoring outer spaces). Apply it before deploying the updated app. If existing duplicates prevent the unique index from being created, the migration rolls back without deleting data. Use the duplicate-report query at the top of the migration to review and resolve those registrations, then rerun it.
 
 Wait for success before continuing. These are one-time migrations; if you are returning to an existing setup, run only the unapplied files. Do not run the old SQL scripts in `v0_hackml-portal-main/scripts/`; they belong to the earlier example app.
 
@@ -249,8 +252,9 @@ Keep production and experimental preview environments separate when using real p
 | Backend is not configured | Backend `SUPABASE_URL` and `SUPABASE_ANON_KEY`; redeploy after setting them |
 | Registration backend is not configured | Frontend `DATAJAM_API_URL`; redeploy |
 | HTML/error page instead of API data | Backend URL points at the API project and is reachable without deployment protection |
-| Login works but registration fails | Both projects use the same Supabase project; migrations 001–004 succeeded |
+| Login works but registration fails | Both projects use the same Supabase project; migrations 001–005 succeeded |
 | Organizer tools need latest migration | Apply 004 after 003, once |
+| Withdrawal/deletion unavailable or duplicate numbers allowed | Apply 005 after 004, once; resolve existing duplicate numbers if the unique index fails |
 | Organizer access required | Verified login email matches the account granted in `registration_private.admins` |
 | No confirmation/reset email | Supabase SMTP credentials, Brevo verified sender/logs, spam folder, rate limits |
 | CAPTCHA rejected | Matching Turnstile keys, Supabase enforcement, allowed hostname, fresh token |

@@ -32,6 +32,8 @@ async function api(action, data = {}) {
 function render() {
   const { profile, team, permissions, max_team_size } = state;
   const profileComplete = profile && typeof profile.photo_consent === 'boolean';
+  $('withdraw').hidden = !profile;
+  if (!profile) $('profile-form').reset();
   $('profile-details').open = !profileComplete;
   for (const input of $('profile-form').querySelectorAll('input[name=photo_consent]')) {
     input.checked = typeof profile?.photo_consent === 'boolean' && input.value === String(profile.photo_consent);
@@ -162,6 +164,10 @@ async function init() {
   $('leave').onclick = () => run(async () => {
     if (!confirm('Leave this team? If you are the last member, the team will be deleted.')) return;
     await api('leave'); message('You left the team.');
+  });
+  $('withdraw').onclick = () => run(async () => {
+    if (!confirm('Withdraw your registration? Your registration, decision, and associated emails will be deleted. You leave your team; captaincy passes to the longest-standing teammate and empty teams are deleted. Your login account is kept.')) return;
+    await api('withdraw'); message('Your registration has been withdrawn.');
   });
   for (const type of ['code', 'link']) $('copy-' + type).onclick = () => run(async () => {
     await navigator.clipboard.writeText($('invite-' + type).value); message(`Invitation ${type} copied.`);

@@ -36,7 +36,7 @@ export interface OrganizerState {
   max_team_size: number
   events: { id: string; actor: string; action: string; data: Record<string, unknown>; created_at: string }[]
 }
-export type OrganizerAction = "list" | "decision" | "accept_all" | "compose" | "send" | "team_create" | "team_rename" | "team_rotate" | "team_assign" | "team_remove" | "team_transfer" | "team_delete"
+export type OrganizerAction = "list" | "decision" | "accept_all" | "compose" | "send" | "team_create" | "team_rename" | "team_rotate" | "team_assign" | "team_remove" | "team_transfer" | "team_delete" | "registration_delete"
 export interface OrganizerResult { email_notice?: string; email_ids?: string[]; accepted_count?: number }
 
 export async function organizerAction<T = OrganizerResult>(action: OrganizerAction, data: Record<string, unknown> = {}): Promise<T> {

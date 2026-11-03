@@ -1,6 +1,6 @@
 // Response shapes from the datajam-app backend. See datajam-app/API.md.
 
-export type RegistrationAction = "me" | "profile" | "create" | "join" | "rename" | "rotate" | "remove" | "transfer" | "leave"
+export type RegistrationAction = "me" | "profile" | "create" | "join" | "rename" | "rotate" | "remove" | "transfer" | "leave" | "withdraw"
 
 export interface Profile {
   id: string

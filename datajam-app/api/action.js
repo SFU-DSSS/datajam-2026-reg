@@ -1,4 +1,4 @@
-const actions = new Set(['me', 'profile', 'create', 'join', 'rename', 'rotate', 'remove', 'transfer', 'leave']);
+const actions = new Set(['me', 'profile', 'create', 'join', 'rename', 'rotate', 'remove', 'transfer', 'leave', 'withdraw']);
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   const origin = req.headers.origin;

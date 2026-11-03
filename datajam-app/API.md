@@ -51,6 +51,11 @@ if (!response.ok) throw new Error(result.error);
 | `remove` | `{user_id}` | Captain only; another current member; rotates invitation |
 | `transfer` | `{user_id}` | Captain only; another current member |
 | `leave` | `{}` | Captain must first transfer if others remain |
+| `withdraw` | `{}` | Delete own registration, decision, and associated emails; keep login account |
+
+Migration 005 enforces unique student numbers across all registrations, ignoring case and outer spaces. Saving a profile with another registration's student number fails with a readable error. Withdrawal releases that number for reuse and returns a state with `profile: null` and `team: null`. It removes team membership, transfers captaincy to the longest-standing remaining teammate, deletes empty teams, and rotates surviving teams' invitations.
+
+Organizers can call `/api/admin` with `{action: "registration_delete", data: {user_id}}` for the same removal behavior. This requires organizer authorization and records the action and participant ID in organizer activity. The login account remains available to register again. Email records cascade with the registration; emails already sent or claimed for sending cannot be recalled.
 
 Every success returns the complete refreshed state:
 

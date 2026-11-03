@@ -26,6 +26,7 @@ before(async () => {
   assert.match((await call(0, 'create', { name: 'Pending consent' })).error, /photo consent/);
   await db.exec(await readFile(new URL('../supabase/003_admin.sql', import.meta.url), 'utf8'));
   await db.exec(await readFile(new URL('../supabase/004_organizer_tools.sql', import.meta.url), 'utf8'));
+  await db.exec(await readFile(new URL('../supabase/005_withdrawal_student_number.sql', import.meta.url), 'utf8'));
 });
 after(async () => { await db?.close(); });
 beforeEach(async () => {
@@ -41,6 +42,65 @@ async function call(i, action, payload = {}, admin = false) {
   });
 }
 const adminCall = (i, action, payload) => call(i, action, payload, true);
+test('student numbers are unique across registrations and edits, ignoring case and outer spaces', async () => {
+  const data = { name: 'Student', institution: 'University', student_number: ' Ab123 ', student_email: 'student@example.com', discord_username: 'student', photo_consent: false };
+  const results = await Promise.allSettled([call(0, 'profile', data), call(1, 'profile', { ...data, student_number: 'ab123' })]);
+  assert.equal(results.filter(r => r.status === 'fulfilled').length, 1);
+  assert.match(results.find(r => r.status === 'rejected').reason.message, /already registered/);
+  assert.equal((await call(1, 'me')).profile, null);
+  await call(0, 'profile', { ...data, name: 'Updated name' });
+  await profile(1);
+  await assert.rejects(call(1, 'profile', { ...data, student_number: 'AB123' }), /already registered/);
+  assert.equal((await call(1, 'me')).profile.student_number, 'N-1');
+  await call(0, 'withdraw');
+  assert.equal((await call(1, 'profile', data)).profile.student_number, 'Ab123');
+});
+
+test('withdrawal only affects the caller, transfers captaincy, rotates invitations and removes dependent records', async () => {
+  await db.query('insert into registration_private.admins values ($1)', [ids[7]]);
+  const t = await team(); await profile(1); await profile(2);
+  await call(1, 'join', { code: t.invite_code });
+  await call(2, 'join', { code: t.invite_code });
+  const mail = await adminCall(7, 'decision', { user_id: ids[0], status: 'accepted' });
+  const result = await call(0, 'withdraw', { user_id: ids[1] });
+  assert.equal(result.profile, null); assert.equal(result.team, null);
+  assert.equal(result.next_step, 'complete_profile');
+  assert.equal(result.admission_status, 'pending');
+  const remaining = await call(1, 'me');
+  assert.equal(remaining.team.captain_id, ids[1]);
+  assert.equal(remaining.team.members.length, 2);
+  assert.notEqual(remaining.team.invite_code, t.invite_code);
+  assert.equal((await adminCall(7, 'claim', { id: mail.email_id })).email, null);
+  assert.equal((await db.query('select count(*)::int as n from registration_private.decisions')).rows[0].n, 0);
+  assert.equal((await db.query('select count(*)::int as n from auth.users where id = $1', [ids[0]])).rows[0].n, 1);
+  await assert.rejects(call(0, 'withdraw'), /Registration not found/);
+  await call(2, 'withdraw');
+  assert.equal((await call(1, 'me')).team.members.length, 1);
+  await call(1, 'withdraw');
+  assert.equal((await adminCall(7, 'list')).teams.length, 0);
+  assert.ok((await profile(0)).profile);
+});
+
+test('organizer deletion requires admin, records actor, and removes a lone captain atomically', async () => {
+  await db.query('insert into registration_private.admins values ($1)', [ids[7]]);
+  await team();
+  await assert.rejects(adminCall(1, 'registration_delete', { user_id: ids[0] }), /Organizer access/);
+  assert.ok((await call(0, 'me')).profile);
+  await adminCall(7, 'registration_delete', { user_id: ids[0] });
+  const list = await adminCall(7, 'list');
+  assert.equal(list.registrations.length, 0); assert.equal(list.teams.length, 0);
+  assert.equal(list.events[0].actor, ids[7]);
+  assert.equal(list.events[0].action, 'registration_delete');
+  assert.equal(list.events[0].data.user_id, ids[0]);
+  await assert.rejects(adminCall(7, 'registration_delete', { user_id: ids[0] }), /Registration not found/);
+  for (const fn of ['registration_action_v4', 'admin_action_v4']) await assert.rejects(db.transaction(async tx => {
+    await tx.exec('set local role authenticated'); await tx.exec(`select public.${fn}('me')`);
+  }), /permission denied/);
+  await assert.rejects(db.transaction(async tx => {
+    await tx.exec('set local role authenticated');
+    await tx.query('select registration_private.delete_registration($1)', [ids[0]]);
+  }), /permission denied/);
+});
 test('admin access is database-controlled and private tables cannot be changed by participants', async () => {
   assert.equal((await adminCall(0, 'access')).is_admin, false);
   for (const action of ['list','decision','compose','claim','finish','accept_all','team_create','team_assign','team_remove','team_delete','team_transfer','team_rename','team_rotate']) await assert.rejects(adminCall(0, action), /Organizer access/);

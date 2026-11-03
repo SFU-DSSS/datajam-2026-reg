@@ -41,7 +41,13 @@ export function setupAdmin(client, run, message) {
         const result = await api('decision', { user_id: r.id, status: next });
         await load(); message(`Registration updated. ${result.email_notice || ''}`);
       });
-      card.append(status, save); $('admin-rows').append(card);
+      const remove = document.createElement('button'); remove.textContent = 'Delete registration';
+      remove.onclick = () => run(async () => {
+        if (!confirm(`Delete ${r.name}'s registration, decision, and associated emails? They leave their team; captaincy passes to the longest-standing teammate and empty teams are deleted. Their login account is kept.`)) return;
+        await api('registration_delete', { user_id: r.id });
+        invalidate(); await load(); message('Registration deleted.');
+      });
+      card.append(status, save, remove); $('admin-rows').append(card);
     }
   }
   async function load() {

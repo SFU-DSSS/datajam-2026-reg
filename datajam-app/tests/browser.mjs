@@ -68,7 +68,7 @@ async function login(page) {
   await status(page, 'Complete your profile');
 }
 async function profile(page, name) {
-  for (const [key, value] of Object.entries({ name, institution: 'Any University', student_number: '1234', student_email: 'different@school.example', discord_username: name }))
+  for (const [key, value] of Object.entries({ name, institution: 'Any University', student_number: name === 'Captain' ? '1234' : '5678', student_email: 'different@school.example', discord_username: name }))
     await page.locator(`#profile-form input[name=${key}]`).fill(value);
   assert.equal(await page.locator('input[name=photo_consent]:checked').count(), 0);
   await page.locator('input[name=photo_consent][value=false]').check();
@@ -84,6 +84,7 @@ try {
   await db.exec(await readFile(new URL('../supabase/002_photo_consent.sql', import.meta.url), 'utf8'));
   await db.exec(await readFile(new URL('../supabase/003_admin.sql', import.meta.url), 'utf8'));
   await db.exec(await readFile(new URL('../supabase/004_organizer_tools.sql', import.meta.url), 'utf8'));
+  await db.exec(await readFile(new URL('../supabase/005_withdrawal_student_number.sql', import.meta.url), 'utf8'));
   for (const id of ids) await db.query('insert into auth.users values ($1,now(),$2)', [id, `${id.slice(-1)}@example.com`]);
   server = spawn(process.execPath, ['server.js'], { cwd: root, env: { ...process.env, PORT: '3107' }, stdio: ['ignore', 'pipe', 'inherit'] });
   await once(server.stdout, 'data');

@@ -347,6 +347,7 @@ export function RegistrationDashboard({ initialState, loginEmail }: Registration
     setStatus(null)
     try {
       setState(await registrationAction(action, data))
+      if (action === "withdraw") setEditingProfile(false)
       setStatus({ kind: "ok", text: successText })
       if (action === "join" || action === "create") {
         try {
@@ -375,6 +376,14 @@ export function RegistrationDashboard({ initialState, loginEmail }: Registration
           <Button variant="outline" className={outlineButtonClass} disabled={busy} onClick={() => run("me", {}, "Registration refreshed.")}>REFRESH STATUS</Button>
           {state.is_admin && <Button asChild className="font-mono text-xs"><Link href="/dashboard/organizer">ORGANIZER DASHBOARD</Link></Button>}
           <Button asChild variant="outline" className={outlineButtonClass}><Link href="/auth/reset-password">CHANGE PASSWORD</Link></Button>
+          {profile && <ConfirmButton
+            label="WITHDRAW REGISTRATION"
+            title="Withdraw from DataJam?"
+            description="Your registration, admission decision, and associated emails will be deleted. You will leave your team; captaincy passes to the longest-standing teammate, or an empty team is deleted. Your login account stays available to register again."
+            disabled={busy}
+            className={dangerButtonClass}
+            onConfirm={() => run("withdraw", {}, "Your registration has been withdrawn.")}
+          />}
         </div>
       </Card>
 
