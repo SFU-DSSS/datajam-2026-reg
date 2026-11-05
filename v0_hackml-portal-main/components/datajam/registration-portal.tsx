@@ -29,16 +29,12 @@ function PortalContent({ registration }: { registration: RegistrationLookup }) {
     return (
       <div className="flex flex-col gap-4">
         <p className="font-mono text-sm text-muted-foreground">
-          {">>> Create an account or sign in to fill out your registration."}
+          {">>> Registration is closed. Sign in to view your existing registration."}
         </p>
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild className={ctaClass}>
-            <Link href="/auth/sign-up">CREATE ACCOUNT</Link>
-          </Button>
           <Button
             asChild
-            variant="outline"
-            className={`${ctaClass} border-primary/25 bg-background text-primary hover:bg-primary/10 hover:text-primary`}
+            className={ctaClass}
           >
             <Link href="/auth/login">SIGN IN</Link>
           </Button>
