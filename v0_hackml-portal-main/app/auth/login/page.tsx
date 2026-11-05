@@ -94,9 +94,8 @@ export default function LoginPage() {
             <Button type="submit" className="h-12 font-mono text-xs" disabled={isLoading}>
               {isLoading ? "SIGNING IN…" : "SIGN IN"}
             </Button>
-            <div className="flex flex-wrap justify-between gap-4 font-mono text-xs text-primary">
+            <div className="flex flex-wrap gap-4 font-mono text-xs text-primary">
               <Link href="/auth/forgot-password">FORGOT PASSWORD?</Link>
-              <Link href="/auth/sign-up">CREATE ACCOUNT</Link>
             </div>
           </form>
         </Card>
