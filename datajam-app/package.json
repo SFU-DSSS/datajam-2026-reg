@@ -2,7 +2,9 @@
   "name": "datajam-registration",
   "private": true,
   "type": "module",
-  "engines": { "node": "22.x" },
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "email": "node --env-file=.env.local scripts/send-email.js",
     "build": "esbuild frontend/app.js --bundle --format=esm --outfile=public/app.js",
@@ -11,6 +13,14 @@
     "test:browser": "npm run build && node tests/browser.mjs",
     "test:portal": "node tests/portal-browser.mjs"
   },
-  "dependencies": { "@supabase/supabase-js": "2.57.4" },
-  "devDependencies": { "esbuild": "0.25.10", "@electric-sql/pglite": "0.3.10", "playwright": "1.63.0" }
+  "dependencies": {
+    "@supabase/supabase-js": "2.57.4",
+    "marked": "^18.1.3",
+    "sanitize-html": "^2.18.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.10",
+    "esbuild": "0.25.10",
+    "playwright": "1.63.0"
+  }
 }

@@ -33,7 +33,7 @@ export default async function handler(req, res) {
         if (email) {
           let outcome;
           try {
-            const messageId = await sendEmail({ to: email.recipient, subject: email.subject, text: email.body });
+            const messageId = await sendEmail({ to: email.recipient, subject: email.subject, text: email.body, markdown: email.kind === 'acceptance' });
             outcome = { state: 'submitted', message_id: messageId };
             result.email_notice = 'Email submitted to Brevo.';
           } catch (error) {

@@ -58,6 +58,9 @@ In the project's SQL Editor, create a query, paste the entire contents of each f
 3. `datajam-app/supabase/003_admin.sql`
 4. `datajam-app/supabase/004_organizer_tools.sql`
 5. `datajam-app/supabase/005_withdrawal_student_number.sql`
+6. `datajam-app/supabase/006_acceptance_email.sql`
+
+Migration 006 updates newly created acceptance emails with the RSVP/dietary form and Discord invite. Acceptance emails render Markdown as HTML with a plain-text fallback; deploy the updated backend along with this migration. Existing queued emails and sent history keep their original wording.
 
 Migration 005 adds withdrawal, organizer registration deletion, and unique student numbers (case-insensitive, ignoring outer spaces). Apply it before deploying the updated app. If existing duplicates prevent the unique index from being created, the migration rolls back without deleting data. Use the duplicate-report query at the top of the migration to review and resolve those registrations, then rerun it.
 

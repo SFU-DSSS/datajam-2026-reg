@@ -44,3 +44,12 @@ test('CLI defaults to preview without an API key or network request', () => {
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Preview only/);
 });
+
+test('Markdown emails preserve emphasis and links and remove unsafe HTML', () => {
+  const email = prepareEmail({ ...message, markdown: true, text: '**Welcome!**  \n[RSVP](https://example.com/rsvp)\n\n<script>alert(1)</script>[bad](javascript:alert)\n<img src=x onerror=alert(1)>' }, env);
+  assert.match(email.htmlContent, /<strong>Welcome!<\/strong>/);
+  assert.match(email.htmlContent, /<a href="https:\/\/example.com\/rsvp">RSVP<\/a>/);
+  assert.doesNotMatch(email.htmlContent, /<script|<img|href="javascript:|onerror=/);
+  assert.match(email.textContent, /RSVP \(https:\/\/example.com\/rsvp\)/);
+  assert.equal(prepareEmail(message, env).htmlContent, undefined);
+});

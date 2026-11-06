@@ -27,6 +27,7 @@ before(async () => {
   await db.exec(await readFile(new URL('../supabase/003_admin.sql', import.meta.url), 'utf8'));
   await db.exec(await readFile(new URL('../supabase/004_organizer_tools.sql', import.meta.url), 'utf8'));
   await db.exec(await readFile(new URL('../supabase/005_withdrawal_student_number.sql', import.meta.url), 'utf8'));
+  await db.exec(await readFile(new URL('../supabase/006_acceptance_email.sql', import.meta.url), 'utf8'));
 });
 after(async () => { await db?.close(); });
 beforeEach(async () => {
@@ -133,6 +134,10 @@ test('admin decisions queue one acceptance, use verified login email, and claim 
   const claims = await Promise.all([adminCall(7, 'claim', { id: first.email_id }), adminCall(7, 'claim', { id: first.email_id })]);
   assert.equal(claims.filter(r => r.email).length, 1);
   const email = claims.find(r => r.email).email;
+  assert.equal(email.subject, 'You’re in! 🎉 Next steps for DataJam 2026');
+  assert.match(email.body, /\*\*DataJam 2026\*\*/);
+  assert.match(email.body, /https:\/\/docs.google.com\/forms/);
+  assert.match(email.body, /https:\/\/discord.gg\/8mQmW3uSB8/);
   assert.equal(email.recipient, `${ids[0]}@example.com`);
   await adminCall(7, 'finish', { id: email.id, state: 'submitted', message_id: 'brevo-id' });
   assert.equal((await adminCall(7, 'decision', { user_id: ids[0], status: 'accepted' })).email_id, null);
