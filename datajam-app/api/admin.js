@@ -1,4 +1,3 @@
-import { sendEmail } from '../lib/email.js';
 const actions = new Set(['access', 'list', 'decision', 'compose', 'send', 'accept_all', 'team_create', 'team_rename', 'team_rotate', 'team_assign', 'team_remove', 'team_transfer', 'team_delete', 'registration_delete']);
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -15,7 +14,9 @@ export default async function handler(req, res) {
       method: 'POST', headers: { apikey: process.env.SUPABASE_ANON_KEY, Authorization: req.headers.authorization, 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, payload }), signal: AbortSignal.timeout(10000)
     });
-    const result = await response.json();
+    const result = await response.json().catch(() => {
+      throw new Error(`Database service returned an unreadable response (HTTP ${response.status}). Try again shortly.`);
+    });
     if (!response.ok) throw new Error(result.code === 'P0001' ? result.message : 'Admin request failed. Check your session and database setup.');
     return result;
   }
@@ -33,6 +34,8 @@ export default async function handler(req, res) {
         if (email) {
           let outcome;
           try {
+            // Dashboard reads must not depend on email renderer initialization.
+            const { sendEmail } = await import('../lib/email.js');
             const messageId = await sendEmail({ to: email.recipient, subject: email.subject, text: email.body, markdown: email.kind === 'acceptance' });
             outcome = { state: 'submitted', message_id: messageId };
             result.email_notice = 'Email submitted to Brevo.';

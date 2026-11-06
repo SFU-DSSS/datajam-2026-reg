@@ -1,9 +1,42 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import handler from '../api/admin.js';
 function response() {
   return { headers: {}, setHeader(k,v) { this.headers[k] = v; }, status(code) { this.code = code; return this; }, json(body) { this.body = body; } };
 }
+test('dashboard API starts and lists registrations even when email libraries cannot load', () => {
+  const child = spawnSync(process.execPath, ['--input-type=module', '-e', `
+    import { registerHooks } from 'node:module';
+    import assert from 'node:assert/strict';
+    registerHooks({ resolve(specifier, context, nextResolve) {
+      if (specifier === 'marked' || specifier === 'sanitize-html') throw new Error('Email dependency unavailable');
+      return nextResolve(specifier, context);
+    } });
+    const { default: handler } = await import(${JSON.stringify(new URL('../api/admin.js', import.meta.url).href)});
+    process.env.SUPABASE_URL = 'https://example.supabase.co';
+    process.env.SUPABASE_ANON_KEY = 'public-key';
+    globalThis.fetch = async () => ({ ok: true, json: async () => ({ registrations: [] }) });
+    const res = { setHeader() {}, status(code) { this.code = code; return this; }, json(body) { this.body = body; } };
+    await handler({ method: 'POST', headers: { authorization: 'Bearer test-token' }, body: { action: 'list' } }, res);
+    assert.equal(res.code, 200);
+    assert.deepEqual(res.body.registrations, []);
+  `], { encoding: 'utf8' });
+  assert.equal(child.status, 0, child.stderr);
+});
+
+test('admin API reports non-JSON database failures without exposing response bodies', async () => {
+  const originalFetch = globalThis.fetch, originalEnv = { ...process.env };
+  try {
+    Object.assign(process.env, { SUPABASE_URL: 'https://example.supabase.co', SUPABASE_ANON_KEY: 'public-key' });
+    globalThis.fetch = async () => ({ ok: false, status: 502, json: async () => { throw new SyntaxError('private upstream body'); } });
+    const res = response();
+    await handler({ method: 'POST', headers: { authorization: 'Bearer test-token' }, body: { action: 'list' } }, res);
+    assert.equal(res.code, 400);
+    assert.match(res.body.error, /unreadable response \(HTTP 502\)/);
+    assert.ok(!res.body.error.includes('private upstream body'));
+  } finally { globalThis.fetch = originalFetch; process.env = originalEnv; }
+});
 test('admin API rejects invalid requests before calling providers', async () => {
   for (const [req, status] of [
     [{ method: 'GET', headers: {} }, 405],

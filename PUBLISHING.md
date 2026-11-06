@@ -62,6 +62,8 @@ In the project's SQL Editor, create a query, paste the entire contents of each f
 
 Migration 006 updates newly created acceptance emails with the RSVP/dietary form and Discord invite. Acceptance emails render Markdown as HTML with a plain-text fallback; deploy the updated backend along with this migration. Existing queued emails and sent history keep their original wording.
 
+The backend pins `sanitize-html` and overrides its `htmlparser2` dependency to version 10, which supports CommonJS. Version 12 is ESM-only and crashes Vercel runtimes that disable `require(ESM)`. Keep the override and deploy the lockfile; the email tests verify rendering with `--no-experimental-require-module`.
+
 Migration 005 adds withdrawal, organizer registration deletion, and unique student numbers (case-insensitive, ignoring outer spaces). Apply it before deploying the updated app. If existing duplicates prevent the unique index from being created, the migration rolls back without deleting data. Use the duplicate-report query at the top of the migration to review and resolve those registrations, then rerun it.
 
 Wait for success before continuing. These are one-time migrations; if you are returning to an existing setup, run only the unapplied files. Do not run the old SQL scripts in `v0_hackml-portal-main/scripts/`; they belong to the earlier example app.

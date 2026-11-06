@@ -21,7 +21,9 @@ export default async function OrganizerPage() {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
       body: JSON.stringify({ action: "list", data: {} }),
     })
-    const result = await response.json()
+    const result = await response.json().catch(() => {
+      throw new Error(`Organizer backend unavailable (HTTP ${response.status}). Please try again shortly.`)
+    })
     if (!response.ok) throw new Error(result.error || "Unable to load the organizer dashboard.")
     if (!Array.isArray(result.teams)) throw new Error("Organizer tools need the latest database migration. Contact the site administrator.")
     state = result

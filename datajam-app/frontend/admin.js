@@ -9,7 +9,9 @@ export function setupAdmin(client, run, message) {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
       body: JSON.stringify({ action, data })
     });
-    const result = await res.json();
+    const result = await res.json().catch(() => {
+      throw new Error(`Organizer backend unavailable (HTTP ${res.status}). Please try again shortly.`);
+    });
     if (!res.ok) throw new Error(result.error || 'Admin request failed.');
     return result;
   }

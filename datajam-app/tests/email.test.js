@@ -6,6 +6,21 @@ import { prepareEmail, sendEmail } from '../lib/email.js';
 const env = { BREVO_API_KEY: 'private-test-key', BREVO_SENDER_EMAIL: 'event@example.com', BREVO_REPLY_TO: 'help@example.com' };
 const message = { to: 'attendee@example.com', subject: 'DataJam update', text: 'See you soon!' };
 
+test('email renderer works when the runtime cannot require ES modules', () => {
+  const result = spawnSync(process.execPath, ['--no-experimental-require-module', '--input-type=module', '-e', `
+    import assert from 'node:assert/strict';
+    import { prepareEmail } from ${JSON.stringify(new URL('../lib/email.js', import.meta.url).href)};
+    const email = prepareEmail({
+      to: 'attendee@example.com', subject: 'Welcome', markdown: true,
+      text: '**Welcome** [RSVP](https://example.com) <script>alert(1)</script>'
+    }, { BREVO_SENDER_EMAIL: 'event@example.com' });
+    assert.match(email.htmlContent, /<strong>Welcome<\\/strong>/);
+    assert.match(email.htmlContent, /href="https:\\/\\/example.com"/);
+    assert.doesNotMatch(email.htmlContent, /<script/);
+  `], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+});
+
 test('sends a private single-recipient message using Brevo API credentials', async () => {
   const id = await sendEmail(message, { env, fetchImpl: async (url, options) => {
     assert.equal(url, 'https://api.brevo.com/v3/smtp/email');
