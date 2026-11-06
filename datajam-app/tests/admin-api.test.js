@@ -50,7 +50,7 @@ test('admin API authorizes before sending, persists results, and leaves uncertai
   const originalFetch = globalThis.fetch, originalEnv = { ...process.env };
   Object.assign(process.env, { SUPABASE_URL: 'https://example.supabase.co', SUPABASE_ANON_KEY: 'public-key', BREVO_API_KEY: 'secret-key', BREVO_SENDER_EMAIL: 'organizer@example.com' });
   try {
-    for (const mode of ['denied','sent','unknown','already-claimed','unconfigured']) {
+    for (const mode of ['denied','sent','sent-acceptance','sent-queued','unknown','already-claimed','unconfigured']) {
       const calls = []; let providerCalls = 0;
       if (mode === 'unconfigured') delete process.env.BREVO_API_KEY;
       globalThis.fetch = async (url, options) => {
@@ -59,6 +59,10 @@ test('admin API authorizes before sending, persists results, and leaves uncertai
           providerCalls++;
           assert.equal(options.headers['api-key'], 'secret-key');
           assert.deepEqual(body.to, [{ email: 'participant@example.com' }]);
+          assert.match(body.htmlContent, /<strong>Welcome<\/strong>/);
+          assert.match(body.htmlContent, /href="https:\/\/example.com"/);
+          assert.doesNotMatch(body.htmlContent, /<script/);
+          assert.match(body.textContent, /Welcome/);
           if (mode === 'unknown') throw new Error('timeout');
           return { ok: true, json: async () => ({ messageId: 'brevo-123' }) };
         }
@@ -67,14 +71,14 @@ test('admin API authorizes before sending, persists results, and leaves uncertai
         if (mode === 'denied') return { ok: false, json: async () => ({ code: 'P0001', message: 'Organizer access required.' }) };
         const result = body.action === 'compose' ? { email_id: 'email-id' }
           : body.action === 'access' ? { is_admin: true }
-          : body.action === 'claim' ? { email: mode === 'already-claimed' ? null : { id: 'email-id', recipient: 'participant@example.com', subject: 'Hello', body: 'Welcome' } } : {};
+          : body.action === 'claim' ? { email: mode === 'already-claimed' ? null : { id: 'email-id', recipient: 'participant@example.com', subject: 'Hello', kind: mode === 'sent-acceptance' ? 'acceptance' : 'manual', body: '**Welcome** [RSVP](https://example.com) <script>alert(1)</script>' } } : {};
         return { ok: true, json: async () => result };
       };
       const res = response();
-      await handler({ method: 'POST', headers: { authorization: 'Bearer caller-token' }, body: { action: 'compose', data: {} } }, res);
+      await handler({ method: 'POST', headers: { authorization: 'Bearer caller-token' }, body: { action: mode === 'sent-queued' ? 'send' : 'compose', data: { id: 'email-id' } } }, res);
       assert.equal(res.code, mode === 'denied' ? 403 : 200);
-      assert.equal(providerCalls, ['sent','unknown'].includes(mode) ? 1 : 0);
-      if (mode === 'sent') assert.equal(calls.at(-1).payload.state, 'submitted');
+      assert.equal(providerCalls, ['sent','sent-acceptance','sent-queued','unknown'].includes(mode) ? 1 : 0);
+      if (mode.startsWith('sent')) assert.equal(calls.at(-1).payload.state, 'submitted');
       if (mode === 'unknown') assert.equal(calls.at(-1).payload.state, 'unknown');
       if (mode === 'unconfigured') assert.match(res.body.email_notice, /remains queued/);
     }

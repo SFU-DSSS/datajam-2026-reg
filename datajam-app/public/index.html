@@ -39,6 +39,7 @@
         <form id="admin-email">
           <label>Subject <input name="subject" required maxlength="200"></label>
           <label>Message <textarea name="text" required maxlength="5000" rows="8"></textarea></label>
+          <p>Markdown supported: **bold**, *italic*, [link text](https://example.com), headings, and lists. Preview shows Markdown source; formatting is applied in the delivered email. Images are not supported.</p>
           <button>Preview email</button>
         </form>
         <div id="email-preview" hidden><pre id="email-preview-text"></pre><button id="admin-send">Send emails</button></div>

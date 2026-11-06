@@ -36,7 +36,7 @@ export default async function handler(req, res) {
           try {
             // Dashboard reads must not depend on email renderer initialization.
             const { sendEmail } = await import('../lib/email.js');
-            const messageId = await sendEmail({ to: email.recipient, subject: email.subject, text: email.body, markdown: email.kind === 'acceptance' });
+            const messageId = await sendEmail({ to: email.recipient, subject: email.subject, text: email.body, markdown: true });
             outcome = { state: 'submitted', message_id: messageId };
             result.email_notice = 'Email submitted to Brevo.';
           } catch (error) {
